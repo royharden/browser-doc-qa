@@ -1,0 +1,10 @@
+# PROPOSAL ONLY - not verified on any host (PLAN.md section 7). Inspect the actual served response
+# headers after deployment; a host may ignore this file. Allowed origins can still receive leaked text,
+# so a later production-build sentinel check across main/worker requests is still required.
+# script-src/connect-src include cdn.jsdelivr.net because Transformers.js loads ONNX Runtime WebAssembly
+# files from there by default; huggingface.co and *.hf.co serve the model files.
+/*
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval' https://cdn.jsdelivr.net; worker-src 'self' blob:; connect-src 'self' https://huggingface.co https://*.huggingface.co https://*.hf.co https://cdn.jsdelivr.net; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; font-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'
+  Referrer-Policy: no-referrer
+  X-Content-Type-Options: nosniff
+  Permissions-Policy: camera=(), microphone=(), geolocation=()
