@@ -23,6 +23,7 @@ function input(overrides: Partial<ProtocolInput> = {}): ProtocolInput {
     denseUnavailableReason: 'Model not loaded.',
     model: null,
     policy: DEFAULT_POLICY,
+    calibration: null,
     clock,
     signal: new AbortController().signal,
     environment,
@@ -144,4 +145,23 @@ test('summaries never shrink denominators when rows fail', () => {
   assert.equal(summary.coverage.expected, 24);
   assert.equal(summary.state, 'partial');
   assert.equal(summary.aggregate, null);
+});
+
+test('a calibrated report carries and validates its calibration evidence; mismatches are rejected', async () => {
+  const base = input();
+  const calibration = await runCalibration({ fixture: base.fixture, corpus: base.corpus, dense: null, denseUnavailableReason: 'none', clock, signal: base.signal, runId: 'cal-1', createdAt: base.createdAt });
+  const report = await runBenchmark({ ...base, policy: calibration.policy, calibration, warmupPasses: 0, measuredPasses: 1 });
+  assert.equal(report.calibration?.runId, 'cal-1');
+  assert.deepEqual(reportProblems(report), []);
+  const missing = { ...report, calibration: null };
+  assert.ok(reportProblems(missing).some((problem) => problem.includes('calibration evidence')));
+  const mismatched = { ...report, calibration: { ...calibration, runId: 'other' } };
+  assert.ok(reportProblems(mismatched).some((problem) => problem.includes('run id')));
+  const wrongThreshold = { ...report, policy: { ...calibration.policy, keywordMinCoverage: calibration.policy.keywordMinCoverage === 0 ? 0.05 : 0 } };
+  assert.ok(reportProblems(wrongThreshold).some((problem) => problem.includes('chosen threshold')));
+});
+
+test('dense rows that never ran carry no model lineage', async () => {
+  const report = await runBenchmark(input({ warmupPasses: 0, measuredPasses: 1 }));
+  assert.ok(report.rows.filter((row) => row.arm !== 'keyword').every((row) => row.executionKind === 'not-run' && row.status === 'unavailable'));
 });

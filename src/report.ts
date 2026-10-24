@@ -8,6 +8,7 @@ import type {
   ModelIdentity,
   QuestionKind,
 } from './domain.ts';
+import type { CalibrationResult } from './lib/calibrate.ts';
 import type { REPORT_SCHEMA } from './lib/config.ts';
 
 /**
@@ -18,7 +19,7 @@ import type { REPORT_SCHEMA } from './lib/config.ts';
 export type RowStatus = 'ok' | 'unavailable' | 'error' | 'cancelled';
 
 /** Real browser execution vs. contract-test values; only real rows may render as a production comparison. */
-export type ExecutionKind = 'real-browser-lexical' | 'real-browser-model' | 'test-oracle';
+export type ExecutionKind = 'real-browser-lexical' | 'real-browser-model' | 'test-oracle' | 'not-run';
 
 export type QueryStage =
   | 'search-keyword'
@@ -157,6 +158,8 @@ export interface MeasurementReport {
     questionIds: string[];
   };
   policy: GatePolicy;
+  /** Evidence behind the policy: the calibration sweep that produced it, null for uncalibrated defaults. */
+  calibration: CalibrationResult | null;
   config: {
     chunker: ChunkerConfig;
     tokenizerVersion: string;

@@ -326,6 +326,9 @@ export class AppController {
     this.set({ phase: this.readyPhase(), progress: null, notice: 'Cancelled.' });
     if (running.kind === 'model-load') this.set({ model: { ...this.state.model, status: 'unloaded', message: 'Model load cancelled.' } });
     if (running.kind === 'index') this.set({ dense: { status: 'unavailable', reason: 'Dense indexing was cancelled. Keyword still works.', revision: null } });
+    if ((running.kind === 'calibrate' || running.kind === 'benchmark') && (this.state.measurement.status === 'calibrating' || this.state.measurement.status === 'running')) {
+      this.set({ measurement: { ...this.state.measurement, status: 'cancelled', message: 'Cancelled.' } });
+    }
     this.syncModelAfterAbort();
   }
 
@@ -490,6 +493,7 @@ export class AppController {
         denseUnavailableReason: this.state.dense.reason || NO_DENSE_REASON,
         model: this.services.dense?.status() ?? null,
         policy: this.state.policy,
+        calibration: this.state.measurement.calibration,
         clock: this.services.clock,
         signal: job.signal,
         environment: this.services.environment.snapshot(),

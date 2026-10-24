@@ -40,6 +40,8 @@ export function reportProblems(value: unknown): string[] {
     fail('policy invalid.');
   }
 
+  calibrationProblems(value.calibration, policy, questionIds).forEach(fail);
+
   if (!Array.isArray(value.rows)) {
     fail('rows missing.');
     return problems;
@@ -100,7 +102,43 @@ export function productionComparable(row: Pick<QueryRow, 'arm' | 'executionKind'
 }
 
 const ROW_STATUS = ['ok', 'unavailable', 'error', 'cancelled'];
-const EXECUTION = ['real-browser-lexical', 'real-browser-model', 'test-oracle'];
+const EXECUTION = ['real-browser-lexical', 'real-browser-model', 'test-oracle', 'not-run'];
+
+/**
+ * A calibrated (or partially calibrated) policy must carry the sweep that produced it: matching run id,
+ * a complete 21-row sweep per calibrated gate with consistent counts, the chosen threshold equal to the
+ * policy's, and calibration questions disjoint from the evaluated ones. Uncalibrated defaults carry none.
+ */
+function calibrationProblems(calibration: unknown, policy: unknown, evaluated: Set<string>): string[] {
+  if (!isObject(policy)) return [];
+  if (policy.source === 'uncalibrated-default') return calibration === null ? [] : ['Uncalibrated policy must not carry a calibration block.'];
+  if (!isObject(calibration)) return ['Calibrated policy without its calibration evidence.'];
+  const problems: string[] = [];
+  if (calibration.runId !== policy.calibrationRunId) problems.push('Calibration run id does not match policy.calibrationRunId.');
+  const ids = calibration.questionIds;
+  if (!Array.isArray(ids) || ids.length === 0) problems.push('Calibration question ids missing.');
+  else if (ids.some((id) => evaluated.has(id as string))) problems.push('Calibration questions overlap the evaluated questions.');
+  const gates = Array.isArray(policy.calibratedGates) ? policy.calibratedGates : [];
+  if (gates.length === 0) problems.push('Calibrated policy lists no calibrated gates.');
+  for (const gate of gates) {
+    const arm = calibration[gate as string];
+    const threshold = gate === 'keyword' ? policy.keywordMinCoverage : policy.denseMinCosine;
+    if (!isObject(arm) || arm.status !== 'calibrated' || !Array.isArray(arm.sweep) || arm.sweep.length !== 21) {
+      problems.push(`${String(gate)}: calibration sweep missing or incomplete.`);
+      continue;
+    }
+    for (const row of arm.sweep as unknown[]) {
+      if (!isObject(row) || !unit(row.threshold) || !unit(row.balancedAccuracy)
+        || !['positivesAccepted', 'positivesRefused', 'negativesAccepted', 'negativesRefused'].every((key) => finiteInt(row[key]))
+        || (row.positivesAccepted as number) + (row.positivesRefused as number) + (row.negativesAccepted as number) + (row.negativesRefused as number) !== (Array.isArray(ids) ? ids.length : -1)) {
+        problems.push(`${String(gate)}: invalid sweep row.`);
+        break;
+      }
+    }
+    if (!isObject(arm.chosen) || arm.chosen.threshold !== threshold) problems.push(`${String(gate)}: chosen threshold does not match the policy.`);
+  }
+  return problems;
+}
 
 function rowProblems(row: unknown, index: number, questionIds: Set<string>, passIds: Set<string>): string[] {
   const label = `rows[${index}]`;

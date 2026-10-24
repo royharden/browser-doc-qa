@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import type { ArmId } from '../domain.ts';
 import { ARMS } from '../domain.ts';
-import { productionComparable } from '../lib/reportValidate.ts';
 import type { ArmSummary, MeasurementReport, SampleSummary } from '../report.ts';
 import type { PanelProps } from './App.tsx';
 import { ARM_LABEL, policyLabel } from './AskPanel.tsx';
@@ -93,7 +92,8 @@ function CalibrationView({ calibration }: { calibration: NonNullable<PanelProps[
 
 function ReportView({ report }: { report: MeasurementReport }) {
   const [inspectArm, setInspectArm] = useState<ArmId>('keyword');
-  const nonProduction = report.rows.some((row) => !productionComparable(row));
+  // Only test-oracle rows disqualify a report; 'not-run' rows are simply unavailable arms (shown as N/A).
+  const nonProduction = report.rows.some((row) => row.executionKind === 'test-oracle');
   return (
     <div className="report">
       <h3>Report {report.status !== 'complete' && <span className="tag">{report.status}</span>}</h3>

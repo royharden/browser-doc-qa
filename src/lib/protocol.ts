@@ -46,6 +46,8 @@ export interface ProtocolInput {
   denseUnavailableReason: string;
   model: EmbedderStatus | null;
   policy: GatePolicy;
+  /** The calibration run that produced `policy` (required unless the policy is the uncalibrated default). */
+  calibration: CalibrationResult | null;
   clock: Clock;
   signal: AbortSignal;
   environment: EnvironmentSnapshot;
@@ -75,7 +77,8 @@ function denseFor(input: { dense: DenseContext | null; corpus: Corpus }): DenseC
 
 function executionKindFor(arm: ArmId, dense: DenseContext | null): ExecutionKind {
   if (arm === 'keyword') return 'real-browser-lexical';
-  return dense?.executionKind ?? 'real-browser-model';
+  // No dense context: these rows never executed a model, so they claim no model lineage.
+  return dense?.executionKind ?? 'not-run';
 }
 
 export async function runBenchmark(input: ProtocolInput): Promise<MeasurementReport> {
@@ -138,6 +141,7 @@ export async function runBenchmark(input: ProtocolInput): Promise<MeasurementRep
       questionIds: questions.map((question) => question.id),
     },
     policy: input.policy,
+    calibration: input.policy.source === 'uncalibrated-default' ? null : input.calibration,
     config: {
       chunker: corpus.chunks[0]?.chunkerConfig ?? { version: 'none', maxChars: 0, overlapChars: 0, minTailChars: 0 },
       tokenizerVersion: TOKENIZER_VERSION,
@@ -341,7 +345,7 @@ function latency(armRows: readonly QueryRow[]): LatencySummary {
     journeyWall: summary(values((row) => row.journeyWallMs)),
     stages,
     failureDurationsMs: measured
-      .filter((row) => row.status === 'error')
+      .filter((row) => row.status === 'error' || (row.status === 'cancelled' && row.retrievalAttempted))
       .map((row) => Object.values(row.stageMs).reduce((sum, value) => sum + (value ?? 0), 0)),
     warmupExcluded: armRows.length - measured.length,
   };
