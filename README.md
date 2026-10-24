@@ -93,8 +93,12 @@ consent box and load the model (WASM by default; "Try WebGPU" only when an adapt
 - "Delete all app data" invalidates running work, then clears documents, pages, chunks, vectors, answers,
   reports and settings. "Clear model cache" separately removes the Transformers.js Cache Storage bucket; the
   ONNX Runtime files in the ordinary HTTP cache cannot be cleared by a page.
-- Exported reports contain only the bundled fixture's ids, questions, config and metrics — never imported
-  documents, file names or your own questions.
+- Measurements run only on the bundled evaluation corpus, so exported reports **never** contain imported
+  documents, file names or your own questions. A report does contain: the bundled fixture's ids, question
+  text and labels; config and the gate policy with its calibration sweep evidence; per-question rows (retrieved
+  chunk ids/offsets, scores, answer decisions, stage timings); model id, backend and init time; run id,
+  timestamps and source revision; and browser/device hints (user agent, language, logical cores, device-memory
+  hint, WebGPU API presence, cross-origin isolation, WASM threads). Review the JSON before sharing it.
 
 ## Limits
 

@@ -5,8 +5,11 @@ Source of truth: the code in `src/lib/{metrics,calibrate,protocol,reportValidate
 - Corpus: Cedar Ridge Tool Library, 8 original pages, at least 16 page-bounded chunks (validated at run time).
 - Calibration: 12 questions, used only to choose the two answer gates. Keyword coverage and dense cosine are
   swept separately on {0, 0.05, ..., 1}; a question is accepted when its best ungated candidate reaches the
-  threshold. Pick highest balanced accuracy, then fewer false accepts, then the higher threshold. Incomplete
-  calibration keeps the uncalibrated defaults (0.5 / 0.8). The policy is frozen before evaluation.
+  threshold. Pick highest balanced accuracy, then fewer false accepts, then the higher threshold. The fallback
+  is per gate: a gate whose calibration is incomplete or unavailable (e.g. no model loaded) keeps its
+  uncalibrated default (keyword 0.5, cosine 0.8). One calibrated gate gives a `partially-calibrated` policy
+  (with `calibratedGates`); both give `calibrated`; neither keeps `uncalibrated-default`. The policy is frozen
+  before evaluation.
 - Evaluation: 24 untouched questions (18 answerable, 6 negatives). One excluded warm-up pass, then 3
   measured passes; questions in frozen id order; arms in order keyword, dense, hybrid; each arm runs
   independently (dense and hybrid each embed the query).
@@ -21,5 +24,10 @@ Source of truth: the code in `src/lib/{metrics,calibrate,protocol,reportValidate
   dense = embed-query + search-vector; hybrid = search-keyword + embed-query + search-vector + fuse. Wall
   durations are recorded alongside. Nearest-rank p50/p95 over success samples only; fewer than 20 samples is
   flagged. Setup timings are single observations.
-- Report: `browser-doc-qa.measurement.v3`, validated at save, read and export. Rows from test doubles are
-  marked `test-oracle` and are never rendered as a production comparison.
+- Report: `browser-doc-qa.measurement.v3`, validated at save, read and export. Its `calibration` block holds
+  the calibration run that produced the policy (run id, per-gate 21-row sweeps with counts and balanced
+  accuracy, chosen thresholds, hybrid outcomes); it is `null` only for the uncalibrated default, and the
+  validator checks the run id, the sweeps, that chosen thresholds equal the policy and that calibration
+  questions are disjoint from evaluated ones. Rows record an execution kind: `real-browser-lexical`,
+  `real-browser-model`, `not-run` (dense/hybrid rows when no model was loaded) or `test-oracle` (test doubles,
+  never rendered as a production comparison).

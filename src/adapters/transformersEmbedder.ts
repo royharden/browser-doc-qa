@@ -54,7 +54,7 @@ export function workerEmbedder(makeWorker: () => WorkerLike, entry: RegistryEntr
       else if (message.status === 'error') pending.reject(message.requestId, new ActionableError(message.payload.code, message.payload.message));
       else pending.resolve(message.requestId, message.payload);
     };
-    created.onerror = (event) => terminate(new ActionableError('worker-crashed', `The model worker stopped: ${event.message ?? 'unknown error'}.`));
+    created.onerror = (event) => worker === created && terminate(new ActionableError('worker-crashed', `The model worker stopped: ${event.message ?? 'unknown error'}.`));
     worker = created;
     return created;
   };
