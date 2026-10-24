@@ -1,0 +1,76 @@
+{
+  "fixture": "harbor-line.pdf",
+  "status": "pending-real-extraction",
+  "preparation": {
+    "source": "tests/fixtures/pdf/harbor-line.print.html",
+    "output": "public/demo/harbor-line.pdf",
+    "browser": null,
+    "pageSize": "Letter",
+    "margins": "default",
+    "headersFooters": "off",
+    "preparedAt": null
+  },
+  "pageMapping": [
+    {
+      "printedPage": 1,
+      "section": "Schedule"
+    },
+    {
+      "printedPage": 2,
+      "section": "Fares"
+    },
+    {
+      "printedPage": 3,
+      "section": "Safety"
+    },
+    {
+      "printedPage": 4,
+      "section": "Freight"
+    }
+  ],
+  "note": "Sentences must appear on the mapped PDF page after whitespace normalization (line wraps become spaces). Exact canonical text is recorded here only after a real pdf.js extraction is inspected.",
+  "pages": [
+    {
+      "pageNumber": 1,
+      "heading": "Harbor Line Ferry: Schedule",
+      "sentences": [
+        "Harbor Line Ferry runs between Pier 4 and Gull Island.",
+        "The last weekday departure from Pier 4 is 10:40 p.m.",
+        "Saturday and Sunday last departures leave at 9:15 p.m.",
+        "Boarding closes ten minutes before departure.",
+        "The crossing takes thirty five minutes in clear weather."
+      ]
+    },
+    {
+      "pageNumber": 2,
+      "heading": "Harbor Line Ferry: Fares",
+      "sentences": [
+        "Adult fare is 14 dollars each way.",
+        "The senior fare is 7 dollars with photo identification.",
+        "Children under five ride free.",
+        "A bicycle pays a 3 dollar rack fee and must sit on the stern rack.",
+        "Tickets are sold at the Pier 4 window until boarding closes."
+      ]
+    },
+    {
+      "pageNumber": 3,
+      "heading": "Harbor Line Ferry: Safety",
+      "sentences": [
+        "Life jackets are stored in the port locker beside the wheelhouse.",
+        "In a medical emergency, call the duty officer on channel 16 and then the harbor clinic at 555-0148.",
+        "Fog delays hold the boat at the dock until visibility exceeds one mile.",
+        "Do not board during a posted fog hold."
+      ]
+    },
+    {
+      "pageNumber": 4,
+      "heading": "Harbor Line Ferry: Freight",
+      "sentences": [
+        "The deck crane limit is 800 pounds.",
+        "Live animals travel only in approved crates on the freight well.",
+        "Propane and loose fuel are refused.",
+        "Freight closes twenty minutes before departure."
+      ]
+    }
+  ]
+}
