@@ -83,6 +83,7 @@ interface PendingEntry<T> {
   resolve(value: T): void;
   reject(error: unknown): void;
   timer: unknown;
+  detach?: () => void;
   onProgress?: (progress: unknown) => void;
 }
 
@@ -114,10 +115,12 @@ export class PendingRequests<T> {
       const timer = this.timers.set(() => {
         if (this.settle(requestId, 'reject', new ActionableError('timeout', 'The model did not respond in time. It was stopped.'))) onTimeout();
       }, timeoutMs);
-      this.entries.set(requestId, { resolve, reject, timer, onProgress });
-      signal?.addEventListener('abort', () => {
+      const onAbort = (): void => {
         this.settle(requestId, 'reject', new ActionableError('cancelled', 'Cancelled.'));
-      }, { once: true });
+      };
+      signal?.addEventListener('abort', onAbort, { once: true });
+      // Remove the listener whenever the request settles another way, so long-lived job signals do not accumulate listeners.
+      this.entries.set(requestId, { resolve, reject, timer, onProgress, detach: () => signal?.removeEventListener('abort', onAbort) });
     });
   }
 
@@ -157,6 +160,7 @@ export class PendingRequests<T> {
     if (!entry) return false;
     this.entries.delete(requestId);
     this.timers.clear(entry.timer);
+    entry.detach?.();
     if (how === 'resolve') entry.resolve(value as T);
     else entry.reject(value);
     return true;

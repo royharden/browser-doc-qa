@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { checkVectorSet, memoryLibrary } from '../src/adapters/libraryStore.ts';
+import { checkVectorSet, memoryLibrary, openDatabase } from '../src/adapters/libraryStore.ts';
 import { harborDocument } from '../src/data/harborLine.ts';
 import { ActionableError } from '../src/lib/errors.ts';
 import { JobController, PendingRequests, type TimerApi } from '../src/lib/lifecycle.ts';
@@ -93,4 +93,17 @@ test('vector cache lookups compare the full identity, ids and width', async () =
   assert.deepEqual(changed, { status: 'discarded', reason: 'cache identity changed' });
   assert.equal((await library.getVectorSet('k', identity, ['a', 'b'], 2)).status, 'miss', 'discarded entries are removed');
   assert.equal(checkVectorSet({ key: 'k', identity, ids: ['a'], dimensions: 2, vectors: [[Number.NaN, 0]] }, 'k', identity, ['a'], 2).status, 'discarded');
+});
+
+test('a blocked IndexedDB open settles once and closes the connection that succeeds later', async () => {
+  let closed = 0;
+  const request: Record<string, unknown> = {};
+  const db = { close: () => { closed += 1; }, onversionchange: null };
+  request.result = db;
+  const factory = { open: () => request } as unknown as IDBFactory;
+  const opening = openDatabase(factory);
+  (request.onblocked as () => void)();
+  await assert.rejects(opening, (error: unknown) => error instanceof ActionableError && error.code === 'storage-blocked');
+  (request.onsuccess as () => void)();
+  assert.equal(closed, 1, 'the late connection is released instead of leaking');
 });

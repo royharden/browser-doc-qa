@@ -107,8 +107,19 @@ export function deleteDatabase(factory: IDBFactory | undefined = globalThis.inde
   });
 }
 
-function openDatabase(factory: IDBFactory): Promise<IDBDatabase> {
+/**
+ * Opens the versioned database and settles exactly once. If the open was blocked (another tab holds an
+ * older version) or failed, a connection that succeeds later is closed immediately instead of leaking and
+ * blocking future upgrades and Delete all.
+ */
+export function openDatabase(factory: IDBFactory): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
+    let settled = false;
+    const fail = (error: unknown): void => {
+      if (settled) return;
+      settled = true;
+      reject(error);
+    };
     const request = factory.open(DB_NAME, DB_VERSION);
     request.onupgradeneeded = (event) => {
       const db = request.result;
@@ -120,9 +131,33 @@ function openDatabase(factory: IDBFactory): Promise<IDBDatabase> {
         db.createObjectStore('reports');
       }
     };
-    request.onblocked = () => reject(new ActionableError('storage-blocked', 'Another tab is using an older version of this app. Close it and reload.'));
-    request.onerror = () => reject(mapError(request.error));
-    request.onsuccess = () => resolve(request.result);
+    request.onblocked = () => fail(new ActionableError('storage-blocked', 'Another tab is using an older version of this app. Close it and reload.'));
+    request.onerror = () => fail(mapError(request.error));
+    request.onsuccess = () => {
+      const db = request.result;
+      if (settled) {
+        db.close();
+        return;
+      }
+      settled = true;
+      // Release this connection when another tab needs to upgrade or delete the database.
+      db.onversionchange = () => db.close();
+      resolve(db);
+    };
+  });
+}
+
+function deleteDocumentRows(db: IDBDatabase, id: string): Promise<unknown> {
+  return run(db, ['documents', 'vectorSets'], 'readwrite', (tx) => {
+    tx.objectStore('documents').delete(id);
+    const index = tx.objectStore('vectorSets').index('documentId');
+    const cursor = index.openKeyCursor(IDBKeyRange.only(id));
+    cursor.onsuccess = () => {
+      const current = cursor.result;
+      if (!current) return;
+      tx.objectStore('vectorSets').delete(current.primaryKey);
+      current.continue();
+    };
   });
 }
 
@@ -152,7 +187,7 @@ function indexedLibrary(db: IDBDatabase): LibraryStore {
       const row = await run<unknown>(db, ['documents'], 'readonly', (tx) => tx.objectStore('documents').get(id));
       if (row === undefined) return null;
       if (!isDocumentRow(row)) {
-        await this.deleteDocument(id);
+        await deleteDocumentRows(db, id);
         return null;
       }
       return row.document;
@@ -164,17 +199,7 @@ function indexedLibrary(db: IDBDatabase): LibraryStore {
     },
     async deleteDocument(id) {
       guard();
-      await run(db, ['documents', 'vectorSets'], 'readwrite', (tx) => {
-        tx.objectStore('documents').delete(id);
-        const index = tx.objectStore('vectorSets').index('documentId');
-        const cursor = index.openKeyCursor(IDBKeyRange.only(id));
-        cursor.onsuccess = () => {
-          const current = cursor.result;
-          if (!current) return;
-          tx.objectStore('vectorSets').delete(current.primaryKey);
-          current.continue();
-        };
-      });
+      await deleteDocumentRows(db, id);
     },
     async getVectorSet(key, identity, ids, dimensions) {
       guard();

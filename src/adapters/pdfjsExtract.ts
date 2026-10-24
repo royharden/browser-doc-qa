@@ -39,8 +39,16 @@ export function pdfjsExtractor(): PdfExtractor {
         let characters = 0;
         for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
           throwIfAborted(signal);
-          const page = await pdf.getPage(pageNumber);
-          const content = await page.getTextContent({ includeMarkedContent: false });
+          let content: { items: unknown[] };
+          let page: PdfPageProxy;
+          try {
+            page = await pdf.getPage(pageNumber);
+            content = await page.getTextContent({ includeMarkedContent: false });
+          } catch (error) {
+            // destroy() on cancel surfaces as a raw pdf.js error; report it as a cancel, otherwise as unsupported.
+            if (signal.aborted) throw new ActionableError('cancelled', 'Import was cancelled.');
+            throw new ActionableError('unsupported-pdf', `Page ${pageNumber} could not be read (${errorMessage(error)}).`);
+          }
           const items = content.items.filter(isTextItem);
           const canonicalText = reconstructPage(items);
           characters += canonicalText.length;

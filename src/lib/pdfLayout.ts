@@ -12,7 +12,8 @@
  * - Hyphenated wraps: the hyphen is KEPT and the lines are joined with no space ("exam-" + "ple" ->
  *   "exam-ple"), so no glyph is ever dropped and real compounds ("well-known") stay correct.
  * - Ligatures U+FB00-U+FB06 expand to their letters (NFKC on that block only). Digits are never altered.
- * - Lines starting with a bullet glyph or list number always start on a new line.
+ * - Bullets and list numbers are kept as extracted text; they start a new line only when pdf.js reports a
+ *   new baseline or hasEOL (no extra bullet-specific rule in v1).
  */
 export const PDF_LAYOUT_VERSION = 'pdf-layout-v1';
 
