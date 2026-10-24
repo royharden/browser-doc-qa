@@ -2,7 +2,7 @@ import type { Answer, ArmId, GatePolicy, Hit } from '../domain.ts';
 import type { Clock } from '../ports.ts';
 import type { QueryStage, RowStatus } from '../report.ts';
 import type { Corpus } from '../session.ts';
-import { answerFromHits, type SentenceVectorSource } from './answer.ts';
+import { answerFromHits, type AnswerDiagnostics, type SentenceVectorSource } from './answer.ts';
 import { MAX_QUESTION_CHARS } from './config.ts';
 import { ActionableError, errorMessage } from './errors.ts';
 import { denseCandidates, fuseHits, keywordCandidates, keywordHits, denseHits } from './retrieve.ts';
@@ -27,6 +27,8 @@ export interface ArmRun {
   failedStage: QueryStage | null;
   hits: Hit[];
   answer: Answer | null;
+  /** Ungated candidate maxima for calibration; null until the answer stage ran. */
+  diagnostics: AnswerDiagnostics | null;
   stageMs: Partial<Record<QueryStage, number>>;
   retrievalSumMs: number | null;
   answerSumMs: number | null;
@@ -72,6 +74,7 @@ export async function runArm(input: ArmInput): Promise<ArmRun> {
     failedStage: null,
     hits: [],
     answer: null,
+    diagnostics: null,
     stageMs,
     retrievalSumMs: null,
     answerSumMs: null,
@@ -131,7 +134,7 @@ export async function runArm(input: ArmInput): Promise<ArmRun> {
 
   try {
     if (signal.aborted) throw new ActionableError('cancelled', 'Cancelled.');
-    const { answer, timing } = await answerFromHits({
+    const { answer, timing, diagnostics } = await answerFromHits({
       arm,
       corpus,
       query: input.query,
@@ -144,6 +147,7 @@ export async function runArm(input: ArmInput): Promise<ArmRun> {
     });
     Object.assign(stageMs, timing);
     run.answer = answer;
+    run.diagnostics = diagnostics;
     run.answerSumMs = (timing['answer-select'] ?? 0) + (timing['answer-embed'] ?? 0) + (timing['answer-format'] ?? 0);
     run.journeyWallMs = clock.now() - journeyStarted;
   } catch (error) {

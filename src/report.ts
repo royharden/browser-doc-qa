@@ -104,7 +104,14 @@ export interface ArmSummary {
   negativeDenominator: number;
   passes: PassQuality[];
   /** Mean over passes; only present when state === 'complete'. */
-  aggregate: { recall: Record<string, number>; mrr: number; correctAbstentions: number; falseAbstentions: number; falseAccepts: number } | null;
+  aggregate: {
+    recall: Record<string, number>;
+    mrr: number;
+    /** Means over passes; null while any answer decision is missing (answer-stage errors). */
+    correctAbstentions: number | null;
+    falseAbstentions: number | null;
+    falseAccepts: number | null;
+  } | null;
   ranksVaryAcrossPasses: boolean;
   latency: LatencySummary;
 }

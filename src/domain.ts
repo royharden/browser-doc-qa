@@ -116,12 +116,14 @@ export interface Excerpt {
   denseCosine: number | null;
 }
 
-export type GatePolicySource = 'uncalibrated-default' | 'calibrated';
+export type GatePolicySource = 'uncalibrated-default' | 'calibrated' | 'partially-calibrated';
 
 export interface GatePolicy {
   keywordMinCoverage: number;
   denseMinCosine: number;
   source: GatePolicySource;
+  /** Which component gates came from the calibration sweep; the others are uncalibrated defaults. */
+  calibratedGates: ('keyword' | 'dense')[];
   /** Fingerprint of the calibration run that produced it, when calibrated. */
   calibrationRunId: string | null;
 }

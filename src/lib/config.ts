@@ -33,6 +33,7 @@ export const DEFAULT_POLICY: GatePolicy = Object.freeze({
   keywordMinCoverage: 0.5,
   denseMinCosine: 0.8,
   source: 'uncalibrated-default',
+  calibratedGates: [],
   calibrationRunId: null,
 });
 

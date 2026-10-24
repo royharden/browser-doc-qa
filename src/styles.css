@@ -106,6 +106,8 @@ mark.cited {
   text-decoration: underline; text-decoration-thickness: 2px; scroll-margin: 4rem;
 }
 .cite-label { font-weight: 700; margin-right: 2px; }
+.measurements { margin-top: 16px; }
+.report h3 .tag { font-size: 0.8rem; }
 .confirm { border: 1px solid var(--danger); border-radius: 6px; padding: 8px; }
 
 @media (max-width: 960px) {

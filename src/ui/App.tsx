@@ -2,6 +2,7 @@ import { useSyncExternalStore } from 'react';
 import type { AppController, AppState } from '../browser/controller.ts';
 import { AskPanel } from './AskPanel.tsx';
 import { DocumentPanel } from './DocumentPanel.tsx';
+import { MeasurementsPanel } from './MeasurementsPanel.tsx';
 import { ModelPanel } from './ModelPanel.tsx';
 import { StatusBar } from './StatusBar.tsx';
 import { Viewer } from './Viewer.tsx';
@@ -37,6 +38,7 @@ export function App({ controller }: { controller: AppController }) {
           <Viewer state={state} controller={controller} />
         </section>
       </main>
+      <MeasurementsPanel state={state} controller={controller} />
     </div>
   );
 }

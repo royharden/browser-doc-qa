@@ -45,6 +45,13 @@ export interface AnswerInput {
   sentenceVectors?: SentenceVectorSource | null;
 }
 
+/** Ungated candidate maxima, used only by the calibration sweep (never shown as confidence). */
+export interface AnswerDiagnostics {
+  candidates: number;
+  maxKeywordCoverage: number | null;
+  maxDenseCosine: number | null;
+}
+
 export interface AnswerTiming {
   'answer-select': number;
   'answer-embed'?: number;
@@ -93,7 +100,15 @@ interface Scored {
   eligible: boolean;
 }
 
-export async function answerFromHits(input: AnswerInput): Promise<{ answer: Answer; timing: AnswerTiming }> {
+export interface AnswerResult {
+  answer: Answer;
+  timing: AnswerTiming;
+  diagnostics: AnswerDiagnostics;
+}
+
+const NO_DIAGNOSTICS: AnswerDiagnostics = { candidates: 0, maxKeywordCoverage: null, maxDenseCosine: null };
+
+export async function answerFromHits(input: AnswerInput): Promise<AnswerResult> {
   const { clock, policy, corpus } = input;
   const selectStarted = clock.now();
   const base = { arm: input.arm, policy, stageError: null } as const;
@@ -126,7 +141,7 @@ export async function answerFromHits(input: AnswerInput): Promise<{ answer: Answ
         reason: 'The answer stage failed; retrieval results are still shown.',
         stageError: { stage: 'answer-embed', message: errorMessage(error) },
       };
-      return { answer, timing: { 'answer-select': selectMs, 'answer-embed': embedMs, 'answer-format': clock.now() - formatStarted } };
+      return { answer, timing: { 'answer-select': selectMs, 'answer-embed': embedMs, 'answer-format': clock.now() - formatStarted }, diagnostics: { ...NO_DIAGNOSTICS, candidates: candidates.length } };
     }
     embedMs = clock.now() - embedStarted;
   }
@@ -160,12 +175,23 @@ export async function answerFromHits(input: AnswerInput): Promise<{ answer: Answ
   });
   const timing: AnswerTiming = { 'answer-select': selectMs, 'answer-format': clock.now() - formatStarted };
   if (embedMs !== undefined) timing['answer-embed'] = embedMs;
-  return { answer, timing };
+  const diagnostics: AnswerDiagnostics = {
+    candidates: scored.length,
+    maxKeywordCoverage: maxOf(scored.map((item) => item.coverage)),
+    maxDenseCosine: maxOf(scored.map((item) => item.cosine)),
+  };
+  return { answer, timing, diagnostics };
 
-  function finish(answer: Answer, started: number): { answer: Answer; timing: AnswerTiming } {
+  function finish(answer: Answer, started: number): AnswerResult {
     const selected = clock.now() - started;
-    return { answer, timing: { 'answer-select': selected, 'answer-format': 0 } };
+    return { answer, timing: { 'answer-select': selected, 'answer-format': 0 }, diagnostics: NO_DIAGNOSTICS };
   }
+}
+
+function maxOf(values: readonly (number | null)[]): number | null {
+  let best: number | null = null;
+  for (const value of values) if (value !== null && (best === null || value > best)) best = value;
+  return best;
 }
 
 function scoreCandidates(input: AnswerInput, candidates: readonly SentenceCandidate[], vectors: ReadonlyMap<string, Vector>): Scored[] {

@@ -3,6 +3,11 @@ import { ARMS } from '../domain.ts';
 import type { DocumentSummary, EmbedProgress, LibraryStore } from '../ports.ts';
 import { importLocalFile, type FileLike } from '../adapters/fileImport.ts';
 import { harborDocument } from '../data/harborLine.ts';
+import { evaluationFixture } from '../data/evaluation/index.ts';
+import type { CalibrationResult } from '../lib/calibrate.ts';
+import { runBenchmark, runCalibration } from '../lib/protocol.ts';
+import { exportReportJson, isMeasurementReport } from '../lib/reportValidate.ts';
+import type { MeasurementReport, SetupObservation } from '../report.ts';
 import { runArm, validateQuestion, type ArmRun, type DenseContext } from '../lib/ask.ts';
 import { DEFAULT_POLICY } from '../lib/config.ts';
 import { ActionableError, errorMessage } from '../lib/errors.ts';
@@ -38,6 +43,12 @@ export interface AppState {
   dense: { status: DenseStatus; reason: string; revision: string | null };
   policy: GatePolicy;
   environment: EnvironmentSnapshot;
+  measurement: {
+    status: 'idle' | 'calibrating' | 'running' | 'done' | 'cancelled' | 'error';
+    message: string | null;
+    report: MeasurementReport | null;
+    calibration: CalibrationResult | null;
+  };
   /** Registry facts shown before consent; null when this build has no dense service. */
   modelInfo: { modelId: string; revision: string; dtype: string; estimate: string; origins: readonly string[] } | null;
 }
@@ -46,6 +57,24 @@ type Listener = () => void;
 
 function idleDenseReason(services: Services): string {
   return services.dense ? NO_DENSE_REASON : 'Dense retrieval is not available in this build.';
+}
+
+function isCancel(error: unknown): boolean {
+  return error instanceof ActionableError && error.code === 'cancelled';
+}
+
+function newRunId(prefix: string): string {
+  const random = typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+    ? crypto.randomUUID()
+    : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  return `${prefix}-${random}`;
+}
+
+const SETUP_NAMES: readonly SetupObservation['name'][] = ['fixture-prepare', 'read', 'extract', 'chunk', 'bm25-build', 'model-init', 'passage-embed', 'persist'];
+
+function toSetupObservation(item: { name: string; ms: number; note: string | null }): SetupObservation {
+  const name = SETUP_NAMES.find((candidate) => candidate === item.name) ?? 'read';
+  return { name, ms: item.ms, items: null, note: item.note };
 }
 
 export const NO_DENSE_REASON = 'Load the embedding model and build the dense index to enable this arm. Keyword works without it.';
@@ -83,6 +112,7 @@ export class AppController {
       dense: { status: 'unavailable', reason: idleDenseReason(services), revision: null },
       policy: DEFAULT_POLICY,
       environment: services.environment.snapshot(),
+      measurement: { status: 'idle', message: null, report: null, calibration: null },
       modelInfo: services.dense ? {
         modelId: services.dense.identity.modelId,
         revision: services.dense.identity.revision,
@@ -131,6 +161,7 @@ export class AppController {
 
   async init(): Promise<void> {
     await this.openLibrary(this.state.persistence.enabled);
+    await this.loadStoredReport();
     const probe = await this.services.environment.probeWebGpu(1500);
     this.set({ model: { ...this.state.model, webgpuAvailable: probe } });
   }
@@ -367,6 +398,123 @@ export class AppController {
     this.jobs.commit(job, () => this.set({ progress: { label, done: progress.done, total: progress.total } }));
   }
 
+  // ---- Measurements (bundled evaluation fixture only) ----
+
+  loadEvaluationCorpus(): Promise<void> {
+    const fixture = evaluationFixture();
+    return this.loadDocument(() => Promise.resolve({
+      document: fixture.document,
+      setup: [{ name: 'fixture-prepare', ms: 0, note: 'Bundled evaluation text fixture; not a PDF extraction.' }],
+    }), false);
+  }
+
+  private measurementReady(): { corpus: Corpus; fixture: ReturnType<typeof evaluationFixture> } | null {
+    const corpus = this.state.corpus;
+    const fixture = evaluationFixture();
+    if (!corpus || corpus.document.contentHash !== fixture.document.contentHash) {
+      this.set({ measurement: { ...this.state.measurement, status: 'error', message: 'Load the evaluation corpus first.' } });
+      return null;
+    }
+    return { corpus, fixture };
+  }
+
+  /** Calibrates gates on the 12-question calibration split only, then freezes the policy. */
+  async calibrate(): Promise<void> {
+    const ready = this.measurementReady();
+    if (!ready) return;
+    const job = this.begin('calibrate', 'benchmarking', 'Calibrating gates');
+    this.set({ measurement: { ...this.state.measurement, status: 'calibrating', message: null } });
+    try {
+      const result = await runCalibration({
+        fixture: ready.fixture,
+        corpus: ready.corpus,
+        dense: this.dense,
+        denseUnavailableReason: this.state.dense.reason || NO_DENSE_REASON,
+        clock: this.services.clock,
+        signal: job.signal,
+        runId: newRunId('cal'),
+        createdAt: new Date().toISOString(),
+        onProgress: (done, total) => { this.jobs.commit(job, () => this.set({ progress: { label: 'Calibrating', done, total } })); },
+      });
+      const message = result.policy.source === 'uncalibrated-default'
+        ? 'Calibration was incomplete; the uncalibrated defaults are kept.'
+        : 'Gates frozen from the calibration split.';
+      const committed = this.jobs.commit(job, () => this.set({
+        policy: result.policy,
+        phase: this.readyPhase(),
+        progress: null,
+        measurement: { ...this.state.measurement, status: 'done', calibration: result, message },
+      }));
+      if (committed) this.jobs.finish(job);
+    } catch (error) {
+      if (!job.isCurrent()) return;
+      this.jobs.finish(job);
+      this.set({ measurement: { ...this.state.measurement, status: isCancel(error) ? 'cancelled' : 'error', message: errorMessage(error) } });
+      this.fail(error, this.readyPhase());
+    }
+  }
+
+  /** Runs the fixed protocol on the untouched 24-question evaluation split with the frozen policy. */
+  async runBenchmark(): Promise<void> {
+    const ready = this.measurementReady();
+    if (!ready) return;
+    const job = this.begin('benchmark', 'benchmarking', 'Running measurements');
+    this.set({ measurement: { ...this.state.measurement, status: 'running', message: null } });
+    try {
+      const report = await runBenchmark({
+        fixture: ready.fixture,
+        corpus: ready.corpus,
+        dense: this.dense,
+        denseUnavailableReason: this.state.dense.reason || NO_DENSE_REASON,
+        model: this.services.dense?.status() ?? null,
+        policy: this.state.policy,
+        clock: this.services.clock,
+        signal: job.signal,
+        environment: this.services.environment.snapshot(),
+        wasmThreads: this.services.environment.wasmThreads(),
+        sourceRevision: this.services.sourceRevision,
+        runId: newRunId('run'),
+        createdAt: new Date().toISOString(),
+        setup: this.state.setup.map(toSetupObservation),
+        onProgress: (done, total) => { this.jobs.commit(job, () => this.set({ progress: { label: 'Measuring', done, total } })); },
+      });
+      const valid = isMeasurementReport(report);
+      if (report.status === 'cancelled') {
+        // Cancel already moved the UI on; keep the completed diagnostic rows visible, marked cancelled.
+        if (this.state.corpus?.revision === ready.corpus.revision) {
+          this.set({ measurement: { ...this.state.measurement, status: 'cancelled', report, message: 'Cancelled: completed rows are kept; remaining rows are marked cancelled.' } });
+        }
+        return;
+      }
+      const committed = this.jobs.commit(job, () => this.set({
+        phase: this.readyPhase(),
+        progress: null,
+        measurement: { ...this.state.measurement, status: 'done', report, message: valid ? null : 'The report failed validation and was not saved.' },
+      }));
+      if (!committed) return;
+      this.jobs.finish(job);
+      if (valid) await this.library?.putReport(report);
+    } catch (error) {
+      if (!job.isCurrent()) return;
+      this.jobs.finish(job);
+      this.set({ measurement: { ...this.state.measurement, status: isCancel(error) ? 'cancelled' : 'error', message: errorMessage(error) } });
+      this.fail(error, this.readyPhase());
+    }
+  }
+
+  /** JSON text of the current report (bundled fixture data only); throws when invalid. */
+  exportReport(): string | null {
+    const report = this.state.measurement.report;
+    return report ? exportReportJson(report) : null;
+  }
+
+  private async loadStoredReport(): Promise<void> {
+    const raw = await this.library?.getReport().catch(() => null);
+    if (raw && isMeasurementReport(raw)) {
+      this.set({ measurement: { ...this.state.measurement, report: raw, message: 'Showing the last saved measurement report.' } });
+    }
+  }
+
   // ---- Data controls ----
 
   /**
@@ -376,6 +524,7 @@ export class AppController {
   async deleteAll(): Promise<void> {
     this.jobs.invalidateAll();
     this.dense = null;
+    this.set({ measurement: { status: 'idle', message: null, report: null, calibration: null } });
     this.set({ corpus: null, runs: {}, query: null, focus: null, viewerPage: null, setup: [], phase: 'idle', progress: null, dense: { status: 'unavailable', reason: idleDenseReason(this.services), revision: null }, policy: DEFAULT_POLICY });
     try {
       await this.library?.clearAll();
@@ -385,14 +534,10 @@ export class AppController {
       this.services.preferences.clear();
       await this.openLibrary(false);
       this.set({ notice: 'All documents, vectors, answers, reports and settings stored by this app were deleted. The model cache is cleared separately.' });
-      this.afterDeleteAll();
     } catch (error) {
       this.fail(error, 'idle');
     }
   }
-
-  /** Hook for later packages (measurement state reset). */
-  protected afterDeleteAll(): void {}
 
   dispose(): void {
     this.jobs.invalidateAll();

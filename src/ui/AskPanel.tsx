@@ -125,7 +125,7 @@ function AnswerView({ state, controller }: PanelProps) {
       {answer && (
         <p className="hint">
           Gates: keyword coverage ≥ {answer.policy.keywordMinCoverage}, cosine ≥ {answer.policy.denseMinCosine}
-          {answer.policy.source === 'calibrated' ? ' (calibrated on the calibration split)' : ' (uncalibrated defaults)'}. Traceability is not truth.
+          {policyLabel(answer.policy)}. Traceability is not truth.
         </p>
       )}
     </div>
@@ -178,6 +178,12 @@ function ArmColumn({ arm, run }: { arm: ArmId; run: ArmRun | undefined }) {
       )}
     </div>
   );
+}
+
+export function policyLabel(policy: { source: string; calibratedGates: readonly string[] }): string {
+  if (policy.source === 'calibrated') return ' (both gates calibrated on the calibration split)';
+  if (policy.source === 'partially-calibrated') return ` (${policy.calibratedGates.join(', ')} gate calibrated; other gate is an uncalibrated default)`;
+  return ' (uncalibrated defaults)';
 }
 
 function scoreText(arm: ArmId, hit: Hit): string {
