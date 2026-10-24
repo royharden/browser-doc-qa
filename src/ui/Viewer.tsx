@@ -17,7 +17,7 @@ export function Viewer({ state, controller }: PanelProps) {
     if (!available || !markRef.current) return;
     markRef.current.focus({ preventScroll: true });
     markRef.current.scrollIntoView({ block: 'center', behavior: 'smooth' });
-  }, [available, focus?.citation.start, focus?.citation.end, focus?.citation.pageNumber, focus?.alias]);
+  }, [available, focus?.sequence]);
 
   if (!corpus) {
     return (

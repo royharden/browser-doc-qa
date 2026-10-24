@@ -9,6 +9,7 @@ import { harborDocument } from '../src/data/harborLine.ts';
 import { ActionableError } from '../src/lib/errors.ts';
 import type { TimerApi } from '../src/lib/lifecycle.ts';
 import { buildCorpus } from '../src/session.ts';
+import { fingerprint as fingerprintOf } from '../src/lib/hash.ts';
 
 // TEST ORACLE ONLY: a scripted worker that returns deterministic unit vectors. Never wired into the app.
 const DIM = BGE_SMALL_EN_V15.identity.dimensions;
@@ -160,4 +161,35 @@ test('query vectors are prefixed inside the adapter and sentence vectors are cac
   const before = fake.sent.length;
   await context.sentenceVectors([candidate], signal);
   assert.equal(fake.sent.length, before, 'cached spans are not re-embedded');
+});
+
+test('cancelling an in-flight request terminates the worker so the next request cannot overlap it', async () => {
+  const fake = fakeWorker({ silent: true });
+  const embedder = workerEmbedder(() => fake.worker);
+  await embedder.load('wasm', signal);
+  const controller = new AbortController();
+  const pending = embedder.tokenCount(['x'], 'passage', controller.signal);
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  controller.abort();
+  await assert.rejects(pending, (error: unknown) => error instanceof ActionableError && error.code === 'cancelled');
+  assert.equal(fake.terminated(), 1, 'the busy worker was stopped');
+  assert.equal(embedder.status(), null, 'the model must be loaded again on a fresh worker');
+});
+
+test('a cached vector set with invalid values is discarded and rebuilt, not fatal', async () => {
+  const corpus = buildCorpus(harborDocument(), () => 0);
+  const library = memoryLibrary();
+  const service = createDenseService(() => workerEmbedder(() => fakeWorker().worker), { now: () => 0 });
+  await service.load('wasm', signal, () => {});
+  const first = await service.buildIndex(corpus, library, signal, () => {});
+  assert.equal(first.cache, 'miss');
+  const identity = passageCacheIdentity(corpus, BGE_SMALL_EN_V15.identity, 'wasm');
+  const ids = corpus.chunks.map((chunk) => chunk.id);
+  const lookup = await library.getVectorSet(fingerprintOf(identity), identity, ids, DIM);
+  assert.equal(lookup.status, 'hit');
+  if (lookup.status !== 'hit') return;
+  await library.putVectorSet({ ...lookup.set, vectors: lookup.set.vectors.map((vector) => vector.map(() => 1)) });
+  const rebuilt = await service.buildIndex(corpus, library, signal, () => {});
+  assert.equal(rebuilt.cache, 'discarded');
+  assert.equal(rebuilt.context.vectors.length, corpus.chunks.length);
 });

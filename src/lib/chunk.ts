@@ -141,7 +141,7 @@ function assertConfig(config: ChunkerConfig): void {
   const ok = Number.isInteger(config.maxChars)
     && Number.isInteger(config.overlapChars)
     && Number.isInteger(config.minTailChars)
-    && config.maxChars > 0
+    && config.maxChars >= 2
     && config.overlapChars >= 0
     && config.overlapChars < config.maxChars
     && config.minTailChars >= 0;

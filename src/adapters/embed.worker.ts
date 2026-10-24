@@ -35,8 +35,10 @@ let extractor: Extractor | null = null;
 
 const reply = (message: WorkerReply, transfer: Transferable[] = []): void => scope.postMessage(message, transfer);
 
+// Messages are handled strictly one at a time, independent of the client's own serialization.
+let chain: Promise<void> = Promise.resolve();
 scope.onmessage = (event: MessageEvent<WorkerRequest>) => {
-  void handle(event.data);
+  chain = chain.then(() => handle(event.data), () => handle(event.data));
 };
 
 async function handle(request: WorkerRequest): Promise<void> {

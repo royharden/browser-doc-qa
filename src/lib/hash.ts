@@ -3,7 +3,7 @@ import type { Page } from '../domain.ts';
 /**
  * Deterministic non-cryptographic 64-bit identity hash: two FNV-1a 32-bit lanes over UTF-16 code units.
  * Used for content/revision/config identity, never for security. The prefix names the algorithm.
- * scripts/annotate-fixture.py reimplements this exactly for the frozen evaluation fixture.
+ * scripts/fixture-authoring.py reimplements this exactly for the frozen evaluation fixture.
  */
 export function identityHash(text: string): string {
   let a = 0x811c9dc5;

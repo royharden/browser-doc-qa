@@ -152,7 +152,7 @@ export async function answerFromHits(input: AnswerInput): Promise<AnswerResult> 
   selectMs += clock.now() - rescoreStarted;
 
   const formatStarted = clock.now();
-  const excerpts: Excerpt[] = picked.map((item, index) => ({
+  const excerpts: Excerpt[] = picked.map((item, index) => Object.freeze({
     alias: index + 1,
     citation: Object.freeze({
       revision: corpus.revision,

@@ -78,7 +78,17 @@ export function workerEmbedder(makeWorker: () => WorkerLike, entry: RegistryEntr
         onProgress ? (progress) => onProgress(progress as EmbedProgress) : undefined,
       );
       target.postMessage(build(requestId));
-      return (await promise) as P;
+      // The worker cannot abort an in-flight load/inference. Cancelling an in-flight request therefore
+      // terminates the worker (like a timeout), so the next request can never overlap the abandoned one.
+      const onAbort = (): void => {
+        if (worker === target) terminate(new ActionableError('cancelled', 'Cancelled; the model worker was stopped. Load the model again.'));
+      };
+      signal.addEventListener('abort', onAbort, { once: true });
+      try {
+        return (await promise) as P;
+      } finally {
+        signal.removeEventListener('abort', onAbort);
+      }
     };
     const next = queue.then(run, run);
     queue = next.catch(() => undefined);

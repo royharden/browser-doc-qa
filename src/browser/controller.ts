@@ -37,7 +37,8 @@ export interface AppState {
   query: string | null;
   runs: Partial<Record<ArmId, ArmRun>>;
   answerArm: ArmId;
-  focus: { arm: ArmId; alias: number; citation: CitationId } | null;
+  /** `sequence` increments on every citation click so the viewer re-focuses even for the same span. */
+  focus: { arm: ArmId; alias: number; citation: CitationId; sequence: number } | null;
   viewerPage: number | null;
   model: { status: ModelStatus; backend: BackendKind | null; message: string | null; initMs: number | null; webgpuAvailable: boolean | null; fallbackFrom: BackendKind | null };
   dense: { status: DenseStatus; reason: string; revision: string | null };
@@ -230,6 +231,7 @@ export class AppController {
     // Replacing the document invalidates every outstanding job and the old revision first.
     this.jobs.invalidateAll();
     this.dense = null;
+    this.syncModelAfterAbort();
     const job = this.begin('import', 'importing', 'Importing');
     this.set({ corpus: null, runs: {}, query: null, focus: null, viewerPage: null, setup: [], dense: { status: 'unavailable', reason: idleDenseReason(this.services), revision: null } });
     try {
@@ -244,7 +246,7 @@ export class AppController {
         ...(persistMs > 0 ? [{ name: 'persist', ms: persistMs, note: 'Saved to browser storage (opt-in)' }] : []),
       ];
       const warning = document.emptyPages.length > 0 ? `Pages without extractable text: ${document.emptyPages.join(', ')}.` : null;
-      this.jobs.commit(job, () => this.set({
+      const committed = this.jobs.commit(job, () => this.set({
         corpus,
         setup: observations,
         phase: 'keyword-ready',
@@ -252,6 +254,7 @@ export class AppController {
         notice: warning,
         viewerPage: document.pages[0]?.pageNumber ?? null,
       }));
+      if (!committed) return;
       this.jobs.finish(job);
       if (this.state.model.status === 'ready') await this.buildDenseIndex();
     } catch (error) {
@@ -263,7 +266,7 @@ export class AppController {
 
   async ask(raw: string): Promise<void> {
     const corpus = this.state.corpus;
-    if (!corpus) return;
+    if (!corpus || this.jobs.running()) return;
     let query: string;
     try {
       query = validateQuestion(raw);
@@ -305,7 +308,7 @@ export class AppController {
     const corpus = this.state.corpus;
     const available = corpus !== null && corpus.revision === excerpt.citation.revision && corpus.document.contentHash === excerpt.citation.sourceHash;
     this.set({
-      focus: { arm, alias, citation: excerpt.citation },
+      focus: { arm, alias, citation: excerpt.citation, sequence: (this.state.focus?.sequence ?? 0) + 1 },
       viewerPage: available ? excerpt.citation.pageNumber : this.state.viewerPage,
       notice: available ? null : 'Source unavailable: the document behind this citation was cleared or replaced.',
     });
@@ -323,13 +326,30 @@ export class AppController {
     this.set({ phase: this.readyPhase(), progress: null, notice: 'Cancelled.' });
     if (running.kind === 'model-load') this.set({ model: { ...this.state.model, status: 'unloaded', message: 'Model load cancelled.' } });
     if (running.kind === 'index') this.set({ dense: { status: 'unavailable', reason: 'Dense indexing was cancelled. Keyword still works.', revision: null } });
+    this.syncModelAfterAbort();
+  }
+
+  /**
+   * Cancelling an in-flight model request terminates the worker (it cannot abort inference), which
+   * unloads the model. Reflect that so the UI never shows a stale "loading"/"ready" model or dense index.
+   */
+  private syncModelAfterAbort(): void {
+    const dense = this.services.dense;
+    if (!dense || this.state.model.status === 'unloaded' || this.state.model.status === 'error') return;
+    if (dense.status() !== null) return;
+    this.dense = null;
+    this.set({
+      model: { ...this.state.model, status: 'unloaded', backend: null, message: 'The model worker was stopped by a cancel or replace. Load the model again for embedding and hybrid.' },
+      dense: { status: 'unavailable', reason: NO_DENSE_REASON, revision: null },
+    });
   }
 
   // ---- Dense model (real model only; see DenseService) ----
 
   async loadModel(backend: BackendKind): Promise<void> {
     const dense = this.services.dense;
-    if (!dense) return;
+    // One job at a time: conflicting actions are refused here, not only disabled in the UI.
+    if (!dense || this.jobs.running()) return;
     const job = this.begin('model-load', 'loading-model', 'Loading model');
     this.set({ model: { ...this.state.model, status: 'loading', message: null, fallbackFrom: null } });
     try {
@@ -420,6 +440,7 @@ export class AppController {
 
   /** Calibrates gates on the 12-question calibration split only, then freezes the policy. */
   async calibrate(): Promise<void> {
+    if (this.jobs.running()) return;
     const ready = this.measurementReady();
     if (!ready) return;
     const job = this.begin('calibrate', 'benchmarking', 'Calibrating gates');
@@ -456,6 +477,7 @@ export class AppController {
 
   /** Runs the fixed protocol on the untouched 24-question evaluation split with the frozen policy. */
   async runBenchmark(): Promise<void> {
+    if (this.jobs.running()) return;
     const ready = this.measurementReady();
     if (!ready) return;
     const job = this.begin('benchmark', 'benchmarking', 'Running measurements');
@@ -524,15 +546,26 @@ export class AppController {
   async deleteAll(): Promise<void> {
     this.jobs.invalidateAll();
     this.dense = null;
+    this.syncModelAfterAbort();
     this.set({ measurement: { status: 'idle', message: null, report: null, calibration: null } });
     this.set({ corpus: null, runs: {}, query: null, focus: null, viewerPage: null, setup: [], phase: 'idle', progress: null, dense: { status: 'unavailable', reason: idleDenseReason(this.services), revision: null }, policy: DEFAULT_POLICY });
+    // Every clear step runs even if an earlier one fails; the first failure is reported afterwards.
+    const failures: unknown[] = [];
+    const attempt = async (step: () => Promise<void> | void): Promise<void> => {
+      try {
+        await step();
+      } catch (error) {
+        failures.push(error);
+      }
+    };
     try {
-      await this.library?.clearAll();
-      this.library?.close();
+      await attempt(() => this.library?.clearAll());
+      await attempt(() => this.library?.close());
       this.library = null;
-      await this.services.deleteDatabase().catch(() => undefined);
-      this.services.preferences.clear();
+      await attempt(() => this.services.deleteDatabase());
+      await attempt(() => this.services.preferences.clear());
       await this.openLibrary(false);
+      if (failures.length > 0) throw failures[0];
       this.set({ notice: 'All documents, vectors, answers, reports and settings stored by this app were deleted. The model cache is cleared separately.' });
     } catch (error) {
       this.fail(error, 'idle');

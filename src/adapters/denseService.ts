@@ -61,12 +61,20 @@ export function createDenseService(
       const ids = corpus.chunks.map((chunk) => chunk.id);
       const started = clock.now();
       const lookup = await library.getVectorSet(key, identity, ids, entry.identity.dimensions);
-      let vectors: Float32Array[];
+      let vectors: Float32Array[] | null = null;
       let persistMs = 0;
+      let cache: 'hit' | 'miss' | 'discarded' = lookup.status;
       if (lookup.status === 'hit') {
-        vectors = lookup.set.vectors.map((vector) => Float32Array.from(vector));
-        validateVectors(vectors, ids.length, entry.identity.dimensions, 'cached passage vectors');
-      } else {
+        const cached = lookup.set.vectors.map((vector) => Float32Array.from(vector));
+        try {
+          validateVectors(cached, ids.length, entry.identity.dimensions, 'cached passage vectors');
+          vectors = cached;
+        } catch {
+          // Invalid stored values (e.g. unnormalized/zero vectors) are discarded and rebuilt, never used.
+          cache = 'discarded';
+        }
+      }
+      if (!vectors) {
         // Token-bound check happens inside embed(); any overflow fails the whole dense index.
         vectors = await model.embed(corpus.chunks.map((chunk) => chunk.text), 'passage', signal, onProgress);
         const persistStarted = clock.now();
@@ -86,7 +94,7 @@ export function createDenseService(
       if (signal.aborted) throw new ActionableError('cancelled', 'Cancelled.');
       return {
         context: denseContext(corpus, model, vectors, entry, status.backend),
-        cache: lookup.status,
+        cache,
         embedMs,
         persistMs,
       };
