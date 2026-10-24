@@ -25,7 +25,7 @@ Source of truth: the code in `src/lib/{metrics,calibrate,protocol,reportValidate
   durations are recorded alongside. Nearest-rank p50/p95 over success samples only; fewer than 20 samples is
   flagged. Setup timings are single observations.
 - Report: `browser-doc-qa.measurement.v3`, validated at save, read and export. Its `calibration` block holds
-  the calibration run that produced the policy (run id, per-gate 21-row sweeps with counts and balanced
+  the calibration run that produced the policy (run id, a 21-row sweep for each calibrated gate with counts and balanced
   accuracy, chosen thresholds, hybrid outcomes); it is `null` only for the uncalibrated default, and the
   validator checks the run id, the sweeps, that chosen thresholds equal the policy and that calibration
   questions are disjoint from evaluated ones. Rows record an execution kind: `real-browser-lexical`,
