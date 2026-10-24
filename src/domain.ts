@@ -1,165 +1,185 @@
-export type ArmId = 'keyword' | 'embedding' | 'hybrid';
+/**
+ * Canonical product types. One definition per concept (PLAN.md section 2).
+ * Runtime validators for data that crosses a trust boundary live in src/validate.ts.
+ * Offsets are half-open UTF-16 code-unit offsets into a page's canonicalText.
+ */
 
-export type AnswerMode = 'extractive' | 'local-model';
+export type ArmId = 'keyword' | 'dense' | 'hybrid';
+export const ARMS: readonly ArmId[] = ['keyword', 'dense', 'hybrid'];
 
-export interface PageText {
-  page: number;
-  text: string;
+export type SourceType = 'pdf' | 'txt' | 'md' | 'fixture';
+
+export interface Page {
+  /** One-based. PDF page numbers and empty pages are preserved. */
+  pageNumber: number;
+  canonicalText: string;
 }
 
-export interface Span {
-  page: number;
+export interface DocumentRecord {
+  id: string;
+  /** Deterministic hash of the canonical pages (see lib/hash.ts). */
+  contentHash: string;
+  displayName: string;
+  sourceType: SourceType;
+  extractionVersion: string;
+  pages: Page[];
+  /** Pages with no extractable text, kept for warnings. */
+  emptyPages: number[];
+}
+
+export interface ChunkerConfig {
+  version: string;
+  maxChars: number;
+  overlapChars: number;
+  minTailChars: number;
+}
+
+export interface Chunk {
+  /** Stable within a corpus revision; ties break on codepoint order of this id. */
+  id: string;
+  documentId: string;
+  corpusRevision: string;
+  pageNumber: number;
+  start: number;
+  end: number;
+  /** Invariant: text === page.canonicalText.slice(start, end). */
+  text: string;
+  chunkerVersion: string;
+  chunkerConfig: ChunkerConfig;
+}
+
+export interface EvidenceUnit {
+  unitId: string;
+  sourceHash: string;
+  pageNumber: number;
+  start: number;
+  end: number;
+  quote: string;
+}
+
+export type Suite = 'tutorial' | 'calibration' | 'evaluation';
+export type QuestionKind = 'lexical' | 'paraphrase' | 'multi-evidence' | 'negative' | 'hard-negative';
+
+export interface LabelledQuestion {
+  id: string;
+  suite: Suite;
+  kind: QuestionKind;
+  text: string;
+  /** Answerables have at least one unit; negatives have none. */
+  evidenceUnits: EvidenceUnit[];
+}
+
+export function isNegativeKind(kind: QuestionKind): boolean {
+  return kind === 'negative' || kind === 'hard-negative';
+}
+
+export interface RankScore {
+  rank: number;
+  score: number;
+}
+
+export interface Hit {
+  chunkId: string;
+  pageNumber: number;
+  start: number;
+  end: number;
+  /** BM25 score (not a probability). */
+  keyword: RankScore | null;
+  /** Cosine similarity of normalized vectors. */
+  dense: RankScore | null;
+  /** RRF score. */
+  fused: RankScore | null;
+  via: { keyword: boolean; dense: boolean };
+  /** Rank within the arm that produced this hit list. */
+  rank: number;
+  corpusRevision: string;
+  configFingerprint: string;
+}
+
+export interface CitationId {
+  revision: string;
+  sourceHash: string;
+  pageNumber: number;
   start: number;
   end: number;
 }
 
-export interface Chunk {
-  id: string;
-  text: string;
-  pageStart: number;
-  pageEnd: number;
-  spans: Span[];
+export interface Excerpt {
+  /** Answer-local alias [n]; immutable once the answer exists. */
+  alias: number;
+  citation: CitationId;
+  quote: string;
+  sourceChunkId: string;
+  /** True when the excerpt is a bounded piece of a longer sentence. */
+  fragment: boolean;
+  keywordCoverage: number | null;
+  denseCosine: number | null;
 }
 
-export interface ScoredHit {
-  chunkId: string;
-  score: number;
-  rank: number;
+export type GatePolicySource = 'uncalibrated-default' | 'calibrated';
+
+export interface GatePolicy {
+  keywordMinCoverage: number;
+  denseMinCosine: number;
+  source: GatePolicySource;
+  /** Fingerprint of the calibration run that produced it, when calibrated. */
+  calibrationRunId: string | null;
 }
 
-export interface Embedder {
-  modelId: string;
-  dtype: string;
-  backend: 'webgpu' | 'wasm';
-  embed(texts: string[]): Promise<number[][]>;
-}
+export type AnswerStatus = 'answered' | 'abstained' | 'no-query-terms' | 'unavailable' | 'error';
 
-export interface LocalGenerator {
-  modelId: string;
-  generate(prompt: string): Promise<string>;
-}
-
-export interface CitedSentence {
-  text: string;
-  citation: number;
-  chunkId: string;
-}
-
-export interface AnswerView {
-  mode: AnswerMode;
-  abstained: boolean;
-  reason?: string;
-  sentences: CitedSentence[];
-  text: string;
-  generateMs: number;
-}
-
-export interface ArmView {
+export interface Answer {
   arm: ArmId;
-  available: boolean;
-  unavailableReason?: string;
-  hits: Array<ScoredHit & { chunk: Chunk }>;
-  abstained: boolean;
-  retrieveMs: number;
+  status: AnswerStatus;
+  excerpts: Excerpt[];
+  /** Human-readable reason for abstained/unavailable/error. */
+  reason: string | null;
+  policy: GatePolicy;
+  /** Present when a dense sentence-stage error kept retrieval but lost the answer. */
+  stageError: { stage: string; message: string } | null;
 }
 
-export interface AskResult {
-  arms: ArmView[];
-  answer: AnswerView;
-  answerArm: ArmId | null;
+export type BackendKind = 'wasm' | 'webgpu';
+
+export interface ModelIdentity {
+  modelId: string;
+  revision: string;
+  dtype: string;
+  dimensions: number;
+  pooling: 'cls' | 'mean';
+  normalized: boolean;
+  queryPrefixVersion: string;
+  tokenizerRevision: string;
+  maxTokens: number;
 }
+
+export interface EmbedderStatus {
+  identity: ModelIdentity;
+  /** Backend actually used by the runtime, never inferred from navigator.gpu. */
+  backend: BackendKind;
+  initMs: number;
+}
+
+export type EmbedKind = 'query' | 'passage' | 'sentence';
 
 export interface EnvironmentSnapshot {
-  userAgent: string;
+  userAgent: string | null;
   hardwareConcurrency: number | null;
+  /** Missing navigator.deviceMemory means unknown. */
   deviceMemoryGb: number | null;
-  webgpu: boolean | null;
-  embeddingBackend: string;
-  embeddingModel: string | null;
-  embeddingDtype: string | null;
+  webgpuApiPresent: boolean | null;
+  crossOriginIsolated: boolean | null;
   language: string | null;
 }
 
-export interface ArmReport {
-  arm: ArmId;
-  available: boolean;
-  unavailableReason?: string;
-  recallAt: { k: number; recall: number }[];
-  mrr: number | null;
-  abstain: { expected: number; correct: number };
-}
-
-export interface StageReport {
-  stage: 'extract' | 'chunk' | 'embed' | 'retrieve' | 'answer';
-  arm: ArmId | null;
-  n: number;
-  p50Ms: number | null;
-  p95Ms: number | null;
-  p99Ms: number | null;
-  samplesMs: number[];
-  skippedReason?: string;
-}
-
-export interface QuestionArmReport {
-  available: boolean;
-  firstRelevantRank: number | null;
-  abstained: boolean;
-  topScore: number | null;
-}
-
-export interface QuestionReport {
-  id: string;
-  kind: 'lexical' | 'paraphrase' | 'unanswerable';
-  prompt: string;
-  arms: Record<ArmId, QuestionArmReport>;
-}
-
-export interface MeasurementReport {
-  schema: 'browser-doc-qa.measurement.v1';
-  startedAt: string;
-  documentName: string;
-  chunkCount: number;
-  questionCount: number;
-  answerableCount: number;
-  answerer: 'extractive';
-  answerArm: ArmId | null;
-  arms: ArmReport[];
-  stages: StageReport[];
-  questions: QuestionReport[];
-  environment: EnvironmentSnapshot;
-  notes: string[];
-}
-
-export interface LabelledQuestion {
-  id: string;
-  kind: 'lexical' | 'paraphrase' | 'unanswerable';
-  prompt: string;
-  goldQuotes: string[];
-  expectAbstain: boolean;
-}
-
-export interface LoadedDocument {
-  id: string;
-  name: string;
-  savedAt: string;
-  pages: PageText[];
-  chunks: Chunk[];
-  vectors: number[][] | null;
-  embeddingModel: string | null;
-  embeddingDtype: string | null;
-  embeddingBackend: string | null;
-  extractMs: number;
-  chunkMs: number;
-}
-
-export interface StoredDocument {
-  id: string;
-  name: string;
-  savedAt: string;
-  pages: PageText[];
-  vectors: number[][] | null;
-  embeddingModel: string | null;
-  embeddingDtype: string | null;
-  embeddingBackend: string | null;
-  extractMs: number;
-}
+export type JobState =
+  | 'idle'
+  | 'importing'
+  | 'keyword-ready'
+  | 'loading-model'
+  | 'indexing'
+  | 'full-ready'
+  | 'asking'
+  | 'benchmarking'
+  | 'cancelling'
+  | 'error';

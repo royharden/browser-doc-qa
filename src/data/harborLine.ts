@@ -1,7 +1,13 @@
-import type { LabelledQuestion, PageText } from '../domain.ts';
+import type { DocumentRecord, LabelledQuestion, Page } from '../domain.ts';
+import { EXTRACTION_VERSION_FIXTURE } from '../lib/config.ts';
+import { unitsFromQuotes } from '../lib/fixture.ts';
+import { pagesHash } from '../lib/hash.ts';
 
-export const SAMPLE_DOCUMENT_ID = 'harbor-line-sample';
-export const SAMPLE_DOCUMENT_NAME = 'Harbor Line manual';
+/**
+ * Harbor Line Ferry: the original four-page tutorial/smoke document. It introduces the app and backs
+ * small contract tests. It is intentionally too small to be a quality benchmark (PLAN.md section 6).
+ */
+export const SAMPLE_DOCUMENT_NAME = 'Harbor Line Ferry manual (tutorial)';
 
 export const QUOTE_WEEKDAY = 'The last weekday departure from Pier 4 is 10:40 p.m.';
 export const QUOTE_SENIOR = 'The senior fare is 7 dollars with photo identification.';
@@ -40,72 +46,53 @@ const PAGE_FREIGHT = [
   'Freight closes twenty minutes before departure.',
 ].join(' ');
 
-export function harborPages(): PageText[] {
+export function harborPages(): Page[] {
   return [
-    { page: 1, text: PAGE_SCHEDULE },
-    { page: 2, text: PAGE_FARES },
-    { page: 3, text: PAGE_SAFETY },
-    { page: 4, text: PAGE_FREIGHT },
+    { pageNumber: 1, canonicalText: PAGE_SCHEDULE },
+    { pageNumber: 2, canonicalText: PAGE_FARES },
+    { pageNumber: 3, canonicalText: PAGE_SAFETY },
+    { pageNumber: 4, canonicalText: PAGE_FREIGHT },
   ];
 }
 
+export function harborDocument(): DocumentRecord {
+  const pages = harborPages();
+  const contentHash = pagesHash(pages);
+  return {
+    id: 'fixture:harbor-line:tutorial-v1',
+    contentHash,
+    displayName: SAMPLE_DOCUMENT_NAME,
+    sourceType: 'fixture',
+    extractionVersion: EXTRACTION_VERSION_FIXTURE,
+    pages,
+    emptyPages: [],
+  };
+}
+
+const TUTORIAL: readonly { id: string; kind: LabelledQuestion['kind']; text: string; quotes: string[] }[] = [
+  { id: 'weekday-departure', kind: 'lexical', text: 'What time is the last weekday departure from Pier 4?', quotes: [QUOTE_WEEKDAY] },
+  { id: 'senior-fare', kind: 'lexical', text: 'What is the senior fare?', quotes: [QUOTE_SENIOR] },
+  { id: 'life-jackets', kind: 'lexical', text: 'Where are the life jackets stored?', quotes: [QUOTE_JACKETS] },
+  { id: 'fog-delay', kind: 'lexical', text: 'What happens when fog delays a departure?', quotes: [QUOTE_FOG] },
+  { id: 'bicycle-fee', kind: 'lexical', text: 'How much is the bicycle rack fee?', quotes: [QUOTE_BICYCLE] },
+  { id: 'crane-limit', kind: 'lexical', text: 'What is the deck crane weight limit?', quotes: [QUOTE_CRANE] },
+  { id: 'monday-commuter', kind: 'paraphrase', text: 'How late can a commuter still leave on a Monday?', quotes: [QUOTE_WEEKDAY] },
+  { id: 'helicopter-pad', kind: 'negative', text: 'Is a helicopter pad available for charter pickups?', quotes: [] },
+];
+
+/** Demo question for the acceptance journey (step 2) and the negative (step 3). */
+export const DEMO_QUESTION = TUTORIAL[0]?.text ?? '';
+export const DEMO_NEGATIVE_QUESTION = TUTORIAL[7]?.text ?? '';
+export const DEMO_PARAPHRASE_QUESTION = TUTORIAL[6]?.text ?? '';
+
 export function harborQuestions(): LabelledQuestion[] {
-  return [
-    {
-      id: 'weekday-departure',
-      kind: 'lexical',
-      prompt: 'What time is the last weekday departure from Pier 4?',
-      goldQuotes: [QUOTE_WEEKDAY],
-      expectAbstain: false,
-    },
-    {
-      id: 'senior-fare',
-      kind: 'lexical',
-      prompt: 'What is the senior fare?',
-      goldQuotes: [QUOTE_SENIOR],
-      expectAbstain: false,
-    },
-    {
-      id: 'life-jackets',
-      kind: 'lexical',
-      prompt: 'Where are the life jackets stored?',
-      goldQuotes: [QUOTE_JACKETS],
-      expectAbstain: false,
-    },
-    {
-      id: 'fog-delay',
-      kind: 'lexical',
-      prompt: 'What happens when fog delays a departure?',
-      goldQuotes: [QUOTE_FOG],
-      expectAbstain: false,
-    },
-    {
-      id: 'bicycle-fee',
-      kind: 'lexical',
-      prompt: 'How much is the bicycle rack fee?',
-      goldQuotes: [QUOTE_BICYCLE],
-      expectAbstain: false,
-    },
-    {
-      id: 'crane-limit',
-      kind: 'lexical',
-      prompt: 'What is the deck crane weight limit?',
-      goldQuotes: [QUOTE_CRANE],
-      expectAbstain: false,
-    },
-    {
-      id: 'monday-commuter',
-      kind: 'paraphrase',
-      prompt: 'How late can a commuter still leave on a Monday?',
-      goldQuotes: [QUOTE_WEEKDAY],
-      expectAbstain: false,
-    },
-    {
-      id: 'helicopter-pad',
-      kind: 'unanswerable',
-      prompt: 'Is a helicopter pad available for charter pickups?',
-      goldQuotes: [],
-      expectAbstain: true,
-    },
-  ];
+  const pages = harborPages();
+  const hash = pagesHash(pages);
+  return TUTORIAL.map((item) => ({
+    id: item.id,
+    suite: 'tutorial',
+    kind: item.kind,
+    text: item.text,
+    evidenceUnits: unitsFromQuotes(item.id, pages, hash, item.quotes),
+  }));
 }

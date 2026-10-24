@@ -1,0 +1,162 @@
+{
+  "fixtureId": "cedar-ridge-tool-library",
+  "fixtureVersion": "eval-v1",
+  "split": "calibration",
+  "sourceHash": "fnv64:23f932f9ec3bab0b",
+  "questions": [
+    {
+      "id": "cal-lost-card",
+      "suite": "calibration",
+      "kind": "lexical",
+      "text": "What does it cost to replace a lost library card?",
+      "evidenceUnits": [
+        {
+          "unitId": "cal-lost-card#1",
+          "sourceHash": "fnv64:23f932f9ec3bab0b",
+          "pageNumber": 1,
+          "start": 623,
+          "end": 683,
+          "quote": "A lost card can be replaced at the front desk for 2 dollars."
+        }
+      ]
+    },
+    {
+      "id": "cal-bench-hold",
+      "suite": "calibration",
+      "kind": "lexical",
+      "text": "How long is a bench reservation held past its start time?",
+      "evidenceUnits": [
+        {
+          "unitId": "cal-bench-hold#1",
+          "sourceHash": "fnv64:23f932f9ec3bab0b",
+          "pageNumber": 5,
+          "start": 261,
+          "end": 324,
+          "quote": "A bench reservation is held for 15 minutes past its start time."
+        }
+      ]
+    },
+    {
+      "id": "cal-teen-jigsaw",
+      "suite": "calibration",
+      "kind": "paraphrase",
+      "text": "Can my teenager take out a jigsaw on our family plan?",
+      "evidenceUnits": [
+        {
+          "unitId": "cal-teen-jigsaw#1",
+          "sourceHash": "fnv64:23f932f9ec3bab0b",
+          "pageNumber": 1,
+          "start": 1094,
+          "end": 1179,
+          "quote": "Youth may not borrow power tools or use the workshop without an adult member present."
+        }
+      ]
+    },
+    {
+      "id": "cal-new-equipment",
+      "suite": "calibration",
+      "kind": "paraphrase",
+      "text": "Who decides which new equipment gets purchased?",
+      "evidenceUnits": [
+        {
+          "unitId": "cal-new-equipment#1",
+          "sourceHash": "fnv64:23f932f9ec3bab0b",
+          "pageNumber": 8,
+          "start": 1049,
+          "end": 1161,
+          "quote": "The board reviews suggestions every quarter and buys new tools based on member demand, safety and storage space."
+        }
+      ]
+    },
+    {
+      "id": "cal-saturday-summer",
+      "suite": "calibration",
+      "kind": "multi-evidence",
+      "text": "What are the regular Saturday hours, and do they change in summer?",
+      "evidenceUnits": [
+        {
+          "unitId": "cal-saturday-summer#1",
+          "sourceHash": "fnv64:23f932f9ec3bab0b",
+          "pageNumber": 6,
+          "start": 314,
+          "end": 418,
+          "quote": "Regular hours are Tuesday through Friday from 3:00 to 8:00 p.m. and Saturday from 9:00 a.m. to 4:00 p.m."
+        },
+        {
+          "unitId": "cal-saturday-summer#2",
+          "sourceHash": "fnv64:23f932f9ec3bab0b",
+          "pageNumber": 6,
+          "start": 814,
+          "end": 931,
+          "quote": "During summer, from the second week of June to the end of August, Saturday hours start one hour earlier, at 8:00 a.m."
+        }
+      ]
+    },
+    {
+      "id": "cal-refused-donations",
+      "suite": "calibration",
+      "kind": "multi-evidence",
+      "text": "Which donations are refused, and where should hazardous items go?",
+      "evidenceUnits": [
+        {
+          "unitId": "cal-refused-donations#1",
+          "sourceHash": "fnv64:23f932f9ec3bab0b",
+          "pageNumber": 7,
+          "start": 305,
+          "end": 442,
+          "quote": "The library cannot accept gas-powered equipment with fuel still in the tank, tools with frayed cords, or any item that contains asbestos."
+        },
+        {
+          "unitId": "cal-refused-donations#2",
+          "sourceHash": "fnv64:23f932f9ec3bab0b",
+          "pageNumber": 7,
+          "start": 443,
+          "end": 554,
+          "quote": "Paint, chemicals and used motor oil are also refused; they should go to the county hazardous waste day instead."
+        }
+      ]
+    },
+    {
+      "id": "cal-chainsaw-course-price",
+      "suite": "calibration",
+      "kind": "hard-negative",
+      "text": "How much does the chainsaw course cost?",
+      "evidenceUnits": []
+    },
+    {
+      "id": "cal-washer-rental-price",
+      "suite": "calibration",
+      "kind": "hard-negative",
+      "text": "What is the daily rental price for the pressure washer?",
+      "evidenceUnits": []
+    },
+    {
+      "id": "cal-board-quorum",
+      "suite": "calibration",
+      "kind": "hard-negative",
+      "text": "How many board members must attend a meeting for a vote to count?",
+      "evidenceUnits": []
+    },
+    {
+      "id": "cal-clinic-laptops",
+      "suite": "calibration",
+      "kind": "hard-negative",
+      "text": "Does the repair clinic fix laptops?",
+      "evidenceUnits": []
+    },
+    {
+      "id": "cal-parking-count",
+      "suite": "calibration",
+      "kind": "hard-negative",
+      "text": "How many parking spaces does the community center lot have?",
+      "evidenceUnits": []
+    },
+    {
+      "id": "cal-three-year-renewal",
+      "suite": "calibration",
+      "kind": "hard-negative",
+      "text": "Can I renew my membership for three years at once?",
+      "evidenceUnits": []
+    }
+  ]
+}

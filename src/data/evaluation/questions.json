@@ -1,0 +1,370 @@
+{
+  "fixtureId": "cedar-ridge-tool-library",
+  "fixtureVersion": "eval-v1",
+  "split": "evaluation",
+  "sourceHash": "fnv64:23f932f9ec3bab0b",
+  "questions": [
+    {
+      "id": "ev-individual-cost",
+      "suite": "evaluation",
+      "kind": "lexical",
+      "text": "How much does an individual membership cost per year?",
+      "evidenceUnits": [
+        {
+          "unitId": "ev-individual-cost#1",
+          "sourceHash": "fnv64:23f932f9ec3bab0b",
+          "pageNumber": 1,
+          "start": 309,
+          "end": 360,
+          "quote": "An individual membership costs 40 dollars per year."
+        }
+      ]
+    },
+    {
+      "id": "ev-late-fee",
+      "suite": "evaluation",
+      "kind": "lexical",
+      "text": "What is the late fee per tool for each overdue day?",
+      "evidenceUnits": [
+        {
+          "unitId": "ev-late-fee#1",
+          "sourceHash": "fnv64:23f932f9ec3bab0b",
+          "pageNumber": 3,
+          "start": 31,
+          "end": 116,
+          "quote": "The library charges a late fee of 1 dollar per tool for each day the tool is overdue."
+        }
+      ]
+    },
+    {
+      "id": "ev-checkout-length",
+      "suite": "evaluation",
+      "kind": "lexical",
+      "text": "How long does a safety checkout take?",
+      "evidenceUnits": [
+        {
+          "unitId": "ev-checkout-length#1",
+          "sourceHash": "fnv64:23f932f9ec3bab0b",
+          "pageNumber": 4,
+          "start": 275,
+          "end": 340,
+          "quote": "A safety checkout takes about 45 minutes and is free for members."
+        }
+      ]
+    },
+    {
+      "id": "ev-reservation-window",
+      "suite": "evaluation",
+      "kind": "lexical",
+      "text": "How far in advance do workshop bench reservations open?",
+      "evidenceUnits": [
+        {
+          "unitId": "ev-reservation-window#1",
+          "sourceHash": "fnv64:23f932f9ec3bab0b",
+          "pageNumber": 5,
+          "start": 177,
+          "end": 259,
+          "quote": "Reservations open fourteen days in advance and are made through the member portal."
+        }
+      ]
+    },
+    {
+      "id": "ev-drop-box",
+      "suite": "evaluation",
+      "kind": "lexical",
+      "text": "When is the returns drop box at the loading dock open?",
+      "evidenceUnits": [
+        {
+          "unitId": "ev-drop-box#1",
+          "sourceHash": "fnv64:23f932f9ec3bab0b",
+          "pageNumber": 6,
+          "start": 463,
+          "end": 552,
+          "quote": "The returns drop box at the loading dock is open at all times except during snow removal."
+        }
+      ]
+    },
+    {
+      "id": "ev-clinic-items",
+      "suite": "evaluation",
+      "kind": "lexical",
+      "text": "How many items can each clinic visitor bring?",
+      "evidenceUnits": [
+        {
+          "unitId": "ev-clinic-items#1",
+          "sourceHash": "fnv64:23f932f9ec3bab0b",
+          "pageNumber": 7,
+          "start": 1008,
+          "end": 1055,
+          "quote": "Clinic visitors may bring up to two items each."
+        }
+      ]
+    },
+    {
+      "id": "ev-assistance-free",
+      "suite": "evaluation",
+      "kind": "paraphrase",
+      "text": "Are yearly dues waived for people on county aid?",
+      "evidenceUnits": [
+        {
+          "unitId": "ev-assistance-free#1",
+          "sourceHash": "fnv64:23f932f9ec3bab0b",
+          "pageNumber": 1,
+          "start": 455,
+          "end": 576,
+          "quote": "Members who receive county food or housing assistance may join for free; no proof beyond the assistance card is required."
+        }
+      ]
+    },
+    {
+      "id": "ev-keep-longer",
+      "suite": "evaluation",
+      "kind": "paraphrase",
+      "text": "If somebody is waiting for the drill I have, may I keep it another week?",
+      "evidenceUnits": [
+        {
+          "unitId": "ev-keep-longer#1",
+          "sourceHash": "fnv64:23f932f9ec3bab0b",
+          "pageNumber": 2,
+          "start": 413,
+          "end": 514,
+          "quote": "A loan can be renewed once, online or at the desk, if no other member has placed a hold on that tool."
+        }
+      ]
+    },
+    {
+      "id": "ev-month-overdue",
+      "suite": "evaluation",
+      "kind": "paraphrase",
+      "text": "What happens if I hang on to something for more than a month?",
+      "evidenceUnits": [
+        {
+          "unitId": "ev-month-overdue#1",
+          "sourceHash": "fnv64:23f932f9ec3bab0b",
+          "pageNumber": 3,
+          "start": 745,
+          "end": 805,
+          "quote": "A tool that is more than 30 days overdue is treated as lost."
+        }
+      ]
+    },
+    {
+      "id": "ev-dull-blade",
+      "suite": "evaluation",
+      "kind": "paraphrase",
+      "text": "Will I be billed because my saw got blunt from ordinary use?",
+      "evidenceUnits": [
+        {
+          "unitId": "ev-dull-blade#1",
+          "sourceHash": "fnv64:23f932f9ec3bab0b",
+          "pageNumber": 3,
+          "start": 438,
+          "end": 524,
+          "quote": "Normal wear, such as dull blades or worn sanding pads, is never charged to the member."
+        }
+      ]
+    },
+    {
+      "id": "ev-aerosol-finish",
+      "suite": "evaluation",
+      "kind": "paraphrase",
+      "text": "May I use an aerosol finish on my furniture indoors?",
+      "evidenceUnits": [
+        {
+          "unitId": "ev-aerosol-finish#1",
+          "sourceHash": "fnv64:23f932f9ec3bab0b",
+          "pageNumber": 5,
+          "start": 553,
+          "end": 694,
+          "quote": "Finishing work with spray paint, lacquer or other solvent-based products is not allowed indoors because the room does not have a spray booth."
+        }
+      ]
+    },
+    {
+      "id": "ev-who-fixes",
+      "suite": "evaluation",
+      "kind": "paraphrase",
+      "text": "Who keeps the equipment in good working order?",
+      "evidenceUnits": [
+        {
+          "unitId": "ev-who-fixes#1",
+          "sourceHash": "fnv64:23f932f9ec3bab0b",
+          "pageNumber": 8,
+          "start": 834,
+          "end": 982,
+          "quote": "It has two paid staff members: a coordinator who manages volunteers and the catalog, and a part-time technician who maintains and repairs the tools."
+        }
+      ]
+    },
+    {
+      "id": "ev-earn-membership",
+      "suite": "evaluation",
+      "kind": "paraphrase",
+      "text": "How can I earn a membership without paying by helping out?",
+      "evidenceUnits": [
+        {
+          "unitId": "ev-earn-membership#1",
+          "sourceHash": "fnv64:23f932f9ec3bab0b",
+          "pageNumber": 8,
+          "start": 551,
+          "end": 668,
+          "quote": "Volunteers who give at least 24 hours in a calendar year receive a free individual membership for the following year."
+        }
+      ]
+    },
+    {
+      "id": "ev-what-to-wear",
+      "suite": "evaluation",
+      "kind": "paraphrase",
+      "text": "What should I wear to the saw training?",
+      "evidenceUnits": [
+        {
+          "unitId": "ev-what-to-wear#1",
+          "sourceHash": "fnv64:23f932f9ec3bab0b",
+          "pageNumber": 4,
+          "start": 426,
+          "end": 516,
+          "quote": "Members must bring closed-toe shoes and must tie back long hair before the session begins."
+        }
+      ]
+    },
+    {
+      "id": "ev-sunday-open",
+      "suite": "evaluation",
+      "kind": "multi-evidence",
+      "text": "Is the library ever open on a Sunday?",
+      "evidenceUnits": [
+        {
+          "unitId": "ev-sunday-open#1",
+          "sourceHash": "fnv64:23f932f9ec3bab0b",
+          "pageNumber": 6,
+          "start": 419,
+          "end": 462,
+          "quote": "The library is closed on Sunday and Monday."
+        },
+        {
+          "unitId": "ev-sunday-open#2",
+          "sourceHash": "fnv64:23f932f9ec3bab0b",
+          "pageNumber": 7,
+          "start": 722,
+          "end": 819,
+          "quote": "The repair clinic meets on the third Sunday of each month in the workshop, from noon to 3:00 p.m."
+        }
+      ]
+    },
+    {
+      "id": "ev-household-washer",
+      "suite": "evaluation",
+      "kind": "multi-evidence",
+      "text": "How many tools can a household have out, and how does a pressure washer count?",
+      "evidenceUnits": [
+        {
+          "unitId": "ev-household-washer#1",
+          "sourceHash": "fnv64:23f932f9ec3bab0b",
+          "pageNumber": 2,
+          "start": 72,
+          "end": 149,
+          "quote": "A household membership shares a limit of eight tools across all of its cards."
+        },
+        {
+          "unitId": "ev-household-washer#2",
+          "sourceHash": "fnv64:23f932f9ec3bab0b",
+          "pageNumber": 2,
+          "start": 150,
+          "end": 261,
+          "quote": "Large items, such as tile saws, pressure washers and the trailer-mounted wood chipper, count as two tools each."
+        }
+      ]
+    },
+    {
+      "id": "ev-fee-cap-block",
+      "suite": "evaluation",
+      "kind": "multi-evidence",
+      "text": "What is the most I could owe in late fees on one tool, and when do unpaid fees block new checkouts?",
+      "evidenceUnits": [
+        {
+          "unitId": "ev-fee-cap-block#1",
+          "sourceHash": "fnv64:23f932f9ec3bab0b",
+          "pageNumber": 3,
+          "start": 117,
+          "end": 166,
+          "quote": "Late fees stop growing after 20 dollars per tool."
+        },
+        {
+          "unitId": "ev-fee-cap-block#2",
+          "sourceHash": "fnv64:23f932f9ec3bab0b",
+          "pageNumber": 3,
+          "start": 167,
+          "end": 269,
+          "quote": "Members with more than 10 dollars in unpaid fees cannot check out new tools until the balance is paid."
+        }
+      ]
+    },
+    {
+      "id": "ev-chipper-rules",
+      "suite": "evaluation",
+      "kind": "multi-evidence",
+      "text": "What do I need to borrow the wood chipper, and how often can I take it?",
+      "evidenceUnits": [
+        {
+          "unitId": "ev-chipper-rules#1",
+          "sourceHash": "fnv64:23f932f9ec3bab0b",
+          "pageNumber": 2,
+          "start": 1021,
+          "end": 1116,
+          "quote": "The wood chipper can only be borrowed by members who bring a vehicle with a rated towing hitch."
+        },
+        {
+          "unitId": "ev-chipper-rules#2",
+          "sourceHash": "fnv64:23f932f9ec3bab0b",
+          "pageNumber": 2,
+          "start": 1185,
+          "end": 1254,
+          "quote": "Loans of the chipper are limited to one weekend per member per month."
+        }
+      ]
+    },
+    {
+      "id": "ev-moving-trucks",
+      "suite": "evaluation",
+      "kind": "negative",
+      "text": "Does the library rent out moving trucks?",
+      "evidenceUnits": []
+    },
+    {
+      "id": "ev-workshop-key",
+      "suite": "evaluation",
+      "kind": "hard-negative",
+      "text": "What is the fee for a replacement workshop key?",
+      "evidenceUnits": []
+    },
+    {
+      "id": "ev-board-hours",
+      "suite": "evaluation",
+      "kind": "hard-negative",
+      "text": "How many volunteer hours are required to join the board?",
+      "evidenceUnits": []
+    },
+    {
+      "id": "ev-bench-late-fee",
+      "suite": "evaluation",
+      "kind": "hard-negative",
+      "text": "What is the late fee for an overdue workshop bench reservation?",
+      "evidenceUnits": []
+    },
+    {
+      "id": "ev-welding",
+      "suite": "evaluation",
+      "kind": "negative",
+      "text": "Does the library offer welding classes?",
+      "evidenceUnits": []
+    },
+    {
+      "id": "ev-tile-saw-value",
+      "suite": "evaluation",
+      "kind": "hard-negative",
+      "text": "What is the replacement value of the tile saw?",
+      "evidenceUnits": []
+    }
+  ]
+}
