@@ -10,19 +10,18 @@ Processing is intended to stay local: no backend, no accounts, no uploads, no an
 model downloads model and runtime files (disclosed in the UI) only after explicit consent. First-visit offline
 use and zero network egress are **not** claimed.
 
-## Status: built, not run
+## Status: FULL validation in progress
 
-> **Dirty Mode construction - runtime unverified.** This source was written under a static-checks-only
-> construction mode. Nothing here has been installed, built, tested or opened in a browser.
+Dirty Mode closed by Roy on 2026-10-26. The inherited source is being validated in local worktrees;
+independent reviewer acceptance is pending. At baseline activation commit `8690fb1`, pinned installation,
+real dependency typechecking, 73 existing tests, 2 independent oracle tests and the Vite production build
+all passed on Node 24.18.0/npm 11.11.0. The app also starts on its claimed loopback test port.
 
-What was checked: every `.ts`/`.tsx` file was syntax-parsed and type-checked (no emit) with an already
-installed TypeScript 6.0 outside this repo; third-party module types (React, pdf.js, Transformers.js, Vite)
-were unavailable because `node_modules` was deliberately not installed, so diagnostics that depend on them
-were filtered. Logic and tests were reviewed by hand-trace in separate static reviews.
-
-What has **not** happened: `npm install` (there is no lockfile yet), `npm run typecheck` with real
-dependency types, `npm test`, `npm run build`, any dev server, any browser run, any real PDF extraction,
-any model download/inference, any calibration or measurement run. No numbers in this repo are measured.
+Follow-up dependencies use PDF.js 6.2.108 and an override of the unused browser-path Node image dependency
+sharp to 0.35.5; real typecheck, 75 tests, production build and production dependency audit pass (zero audit findings). Browser startup
+is currently timing out on this machine, so PDF import, model inference, storage journeys, production
+network sentinels and browser calibration/quality remain unverified. No model quality or browser timing
+numbers are claimed. See the outer STATUS.md and package receipts for candidate-specific results.
 
 ## What is built (source)
 
@@ -51,12 +50,12 @@ Fixtures:
 - **Harbor Line PDF**: `tests/fixtures/pdf/harbor-line.print.html` is the printable source. The PDF itself
   (`public/demo/harbor-line.pdf`) has **not** been produced; see "Activation" step 5.
 
-## Run it (once installs are allowed)
+## Run it locally
 
-Use Node 22.6 or newer (the tests use `--experimental-strip-types`). From this folder:
+Validated runtime: Node 24.18.0 (`.node-version`); minimum Node 22.13.0. From this folder:
 
 ```text
-npm install          # resolves the ranges in package.json and creates package-lock.json; commit the lockfile
+npm ci               # retained lockfile; exact direct dependency versions
 npm run typecheck
 npm test
 npm run build        # output in dist/
@@ -68,12 +67,11 @@ consent box and load the model (WASM by default; "Try WebGPU" only when an adapt
 
 ## Activation and validation still required
 
-1. Install once and keep the lockfile; record exact versions of `pdfjs-dist`, `@huggingface/transformers`,
-   React and Vite, and check current advisories for pdf.js.
-2. Run `npm run typecheck`, `npm test`, `npm run build`; fix real failures (do not weaken tests).
-3. Pin the model: replace `revision: 'main'` in `src/adapters/modelRegistry.ts` with the exact Hugging Face
-   commit of `Xenova/bge-small-en-v1.5`, fill `expectedBytes`, confirm CLS pooling, 384 dimensions and the
-   512-token limit for that artifact, set `pinned: true`, and confirm licence terms in `NOTICE`.
+1. Retain the lockfile and exact versions. Reproduce with `npm ci`; current direct versions are in package.json.
+2. Run `npm run typecheck`, `npm test`, `npm run build` on the candidate; independent review and combined-tree
+   checks are still required. `npm test` includes the nested independent oracles and serializes test files.
+3. Model metadata is pinned at `ea104dacec62c0de699686887e3f920caeb4f3e3`; see `docs/MODEL-ARTIFACT.md`.
+   Confirm actual browser token counts, output vectors and backend through real inference; metadata is not execution.
 4. In a browser: tutorial journey (weekday question, citation highlight, negative question), model load
    with progress/cancel, WASM and optional WebGPU, all three arms on the paraphrase question.
 5. Print `tests/fixtures/pdf/harbor-line.print.html` to `public/demo/harbor-line.pdf` (Letter, default

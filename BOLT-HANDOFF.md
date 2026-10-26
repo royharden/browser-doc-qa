@@ -1,6 +1,6 @@
 # Bolt infrastructure handoff: browser-doc-qa
 
-Status line: **Dirty Mode construction - runtime unverified.**
+Status line: **FULL local validation in progress; independent acceptance pending.**
 
 ## Target and readiness
 
@@ -12,17 +12,17 @@ Status line: **Dirty Mode construction - runtime unverified.**
 - Hosting: static hosting of the Vite `dist/` output; host not selected.
 - Publication: prepare only. Not authorized.
 - Bolt action: **inspect and prepare only**.
-- Status: implementation complete at source level, never installed/built/run; infrastructure Not required.
+- Status: source reused from Dirty Mode. V0 install/typecheck/75 tests/build pass at 8690fb1; current dependency follow-up typecheck/audit pass. Browser startup blocked; no whole-product acceptance. Infrastructure Not required.
 - Owner prerequisites: GitHub access to the imported repository (none exists yet). No API keys or registrations.
 
 ## Build and connection
 
 | Item | Exact command or configuration name |
 |---|---|
-| Runtime / package manager | Node >= 22.6 (tests use `--experimental-strip-types`), npm. **No lockfile yet**: the first `npm install` creates `package-lock.json`, which must be committed. |
+| Runtime / package manager | Node 24.18.0 validated; minimum 22.13.0. npm 11.11.0; retained package-lock.json and exact direct versions. |
 | Frozen install / dev | `npm ci` once the lockfile exists; `npm run dev` |
 | Build / output | `npm run build` (typecheck then `vite build`); output `dist/` |
-| Type/lint/tests | `npm run typecheck`, `npm test` — **never run**. Only a static syntax parse + partial no-emit typecheck without dependency types was done. |
+| Type/lint/tests | `npm run typecheck`, `npm test`; V0 passed real typecheck and 75 tests. Tests include reviewer oracles; no lint script exists. Follow-up results are candidate-specific in outer STATUS.md. |
 | Client file / public env names | Not required. No env variables (`.env.example` explains). Optional non-secret build-time `SOURCE_REVISION`. |
 | Missing config behavior | Not applicable; keyword search works without any model; dense/hybrid show "unavailable" until the user loads the model. |
 
@@ -57,8 +57,8 @@ None. Do not add any. Never expose credentials through `VITE_` variables.
 
 | Check | Expected result | Outcome / receipt |
 |---|---|---|
-| Import/install/build | intended revision loads; install creates lockfile; `npm run build` passes | pending |
-| Typecheck/tests | `npm run typecheck`, `npm test` pass with real dependency types | pending |
+| Import/install/build | pinned `npm ci`; `npm run build` passes | V0 8690fb1 pass; independent review pending |
+| Typecheck/tests | `npm run typecheck`, `npm test` pass with real dependency types | V0 8690fb1 real typecheck and 75 tests pass; current follow-up checks recorded outside |
 | Keyword journey | tutorial loads with no model fetch; weekday question cites exact span; negative abstains | pending |
 | Dense/hybrid | consented model load (WASM; optional WebGPU) with progress/cancel; all three arms run | pending |
 | Measurements | calibration on 12 calibration questions, then 24-question run; JSON export validates | pending |
@@ -67,17 +67,18 @@ None. Do not add any. Never expose credentials through `VITE_` variables.
 | Privacy/headers | served headers inspected; production sentinel check of main/worker requests | pending |
 | Publish | Not requested | Not requested |
 
-Pinned model revision, exact dependency versions and served headers are activation tasks, not presumed successes.
+Model metadata is pinned at ea104dacec62c0de699686887e3f920caeb4f3e3 (docs/MODEL-ARTIFACT.md).
+Real inference/backend/quality and served production headers remain unverified.
 
 ## Deferred-validation ledger
 
 | Component | Assumption / skipped check | Later step |
 |---|---|---|
-| Dependencies | package.json ranges resolve; APIs match pdf.js v4 / Transformers.js v3 | `npm install`, record versions, typecheck |
-| Model registry | revision `main` unpinned; 512 tokens, CLS, 384-d assumed from model config | pin commit, measure bytes, confirm limits |
+| Dependencies | exact versions and lock retained; PDF.js 6.2.108 / Transformers.js 3.8.1 | `npm ci`, candidate type/test/build and actual PDF/model run |
+| Model registry | exact artifact/tokenizer revision and file sizes checked; 512-token/384-d config verified | actual token bounds/CLS vectors/backend inference pending |
 | Embedding worker | Transformers.js pipeline options and tokenizer `encode` behave as coded | real WASM run; optional WebGPU run |
 | PDF layout | heuristics (space/column/paragraph/hyphen) suit real pdf.js items | inspect real extraction of the printed PDF |
-| Tests | hand-traced only | `npm test` |
+| Tests | V0 73 existing + 2 independent oracle tests really passed | `npm test` on each accepted candidate |
 | IndexedDB | upgrade/blocked/versionchange/quota paths behave as coded | browser checks incl. private mode |
 | Calibration/quality | no thresholds chosen yet; defaults 0.5 / 0.8 are uncalibrated | real calibration then evaluation run |
 | Headers/privacy | `_headers` proposal; no egress measured | inspect served headers; sentinel check |
