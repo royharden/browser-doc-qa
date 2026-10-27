@@ -23,6 +23,8 @@ const tree = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).tr
 assert.equal(process.env.S11_RV_EXPECT_COMMIT, tree);
 const productCommit = '109ea2b5964f76376d8316d78502e4a2041a6bac';
 assert.equal(process.env.S11_RV_PRODUCT_COMMIT, productCommit);
+const selection = process.env.S11_RV_V4_CASE ?? 'all';
+assert.ok(['all', 'pdf'].includes(selection));
 const assets = await localAssets(`C:/Worktrees/Bolt.New/browser-doc-qa/FULL-INT/.agent-work/models/${modelRevision}`);
 const output = resolve(process.env.S11_RV_RECEIPT_ROOT ?? '.agent-work/rv-receipts', `V4-${Date.now()}`);
 await mkdir(output, { recursive: true });
@@ -30,7 +32,7 @@ const rows = [];
 const browser = await chromium.launch({ executablePath: process.env.S11_RV_CHROME ?? 'C:/Program Files/Google/Chrome/Application/chrome.exe',
   headless: true, timeout: 30000, args: ['--disable-gpu'] });
 const source = harborPages().map((page) => page.canonicalText).join('\f');
-const save = () => writeFile(resolve(output, 'results.json'), JSON.stringify({ tree, productCommit, authoritySha256,
+const save = () => writeFile(resolve(output, 'results.json'), JSON.stringify({ tree, productCommit, selection, authoritySha256,
   authority: 'Effie delegated by Roy, msg t278u; narrow synthetic-context exception', browser: browser.version(), assets: assets.verified, rows }, null, 2));
 
 async function snapshot(page) {
@@ -102,6 +104,7 @@ async function recoverKeyword(page) {
   assert.match(await page.locator('.excerpts').innerText(), /10:40 p\.m\./);
 }
 async function check(name, run, controls = {}) {
+  if (selection === 'pdf' && name !== 'delete while original real PDF worker is pending; reload and keyword recover') return;
   await grant();
   const context = await browser.newContext({ acceptDownloads: true, viewport: { width: 1200, height: 900 }, serviceWorkers: 'block' });
   await context.addInitScript(instrumentWorkers);
@@ -232,8 +235,11 @@ try {
       assert.ok(evidence.pending.workerCount >= 1, 'The actual PDF worker must exist at the held boundary');
       await erase(page);
       evidence.afterDelete = await snapshot(page); absent(evidence.afterDelete);
+      const releasedAt = Date.now();
       release();
-      await page.waitForTimeout(750);
+      // PDF.js destroy awaits its setup handshake. Observe settlement, not a guessed 750 ms delay.
+      await page.waitForFunction(() => window.__rvWorkerStats.terminations >= 1, undefined, { timeout: 15000 });
+      evidence.pdfTeardownAfterReleaseMs = Date.now() - releasedAt;
       evidence.afterLateResponse = await snapshot(page); absent(evidence.afterLateResponse);
       assert.ok(evidence.afterLateResponse.workers.terminations >= 1, 'Cancelled PDF worker must be terminated');
       assert.equal(await page.locator('.page-text,.library button').count(), 0);
@@ -285,4 +291,4 @@ try {
   await browser.close();
   console.log('Receipt:', output);
 }
-process.exitCode = rows.some((row) => row.status !== 'PASS') || rows.length !== 4 ? 1 : 0;
+process.exitCode = rows.some((row) => row.status !== 'PASS') || rows.length !== (selection === 'all' ? 4 : 1) ? 1 : 0;
