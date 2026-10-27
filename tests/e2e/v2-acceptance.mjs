@@ -177,12 +177,15 @@ try {
       const nav = page.getByRole('navigation', { name: 'Pages', exact: true });
       assert.equal(await nav.getByRole('button').count(), 4);
       const actual = [];
+      const expected = JSON.parse(await readFile('tests/fixtures/pdf/harbor-line.expected.json', 'utf8'));
+      assert.equal(expected.status, 'validated-real-extraction');
       for (let i = 0; i < 4; i += 1) {
         await nav.getByRole('button', { name: String(i + 1), exact: true }).click();
         const text = await page.getByLabel(`Page ${i + 1}`, { exact: true }).innerText();
         actual.push(text);
-        // Whitespace normalization only; preserve every authored digit, punctuation and word.
-        assert.equal(text.replace(/\s+/g, ' ').trim(), harborPages()[i].canonicalText.replace(/\s+/g, ' ').trim());
+        // Exact prepared-PDF oracle plus independent authored source check. PDF headings/wraps are real.
+        assert.equal(text, expected.pages[i].canonicalText);
+        assert.ok(text.replace(/\s+/g, ' ').includes(harborPages()[i].canonicalText.replace(/\s+/g, ' ').trim()));
       }
       await writeFile(resolve(output, 'pdf-pages.json'), JSON.stringify(actual, null, 2));
       await page.getByLabel('Question', { exact: true }).fill('What is the last weekday departure from Pier 4?');
@@ -196,7 +199,7 @@ try {
   rows.push({ name: 'browser startup', status: 'BLOCKED', error: error.stack ?? String(error) });
 } finally {
   if (browser) await browser.close();
-  await writeFile(resolve(output, 'results.json'), JSON.stringify({ revision, origin, external, rows }, null, 2));
+  await writeFile(resolve(output, 'results.json'), JSON.stringify({ revision, origin, browser: browser?.version(), external, rows }, null, 2));
   console.log('Receipt:', output);
 }
 process.exitCode = rows.some((r) => r.status === 'FAIL') ? 1 : rows.some((r) => r.status === 'BLOCKED') ? 2 : 0;
