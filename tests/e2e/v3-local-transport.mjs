@@ -34,7 +34,8 @@ export async function localAssets(modelRoot) {
   const runtime = new Map();
   for (const name of ['ort-wasm-simd-threaded.jsep.mjs', 'ort-wasm-simd-threaded.jsep.wasm']) {
     const body = await readFile(resolve('node_modules/@huggingface/transformers/dist', name));
-    runtime.set(name, { body, contentType: name.endsWith('.wasm') ? 'application/wasm' : 'text/javascript' });
+    runtime.set(`https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1/dist/${name}`,
+      { body, contentType: name.endsWith('.wasm') ? 'application/wasm' : 'text/javascript' });
     verified.push({ name, bytes: body.length, sha256: createHash('sha256').update(body).digest('hex') });
   }
   return { files, runtime, verified };
@@ -65,7 +66,7 @@ export async function transport(context, origin, assets, sentinels, controls = {
     const url = new URL(request.url());
     if (url.origin === origin) return route.continue();
     let asset = assets.files.get(url.href);
-    if (!asset && url.origin === 'https://cdn.jsdelivr.net') asset = assets.runtime.get(url.pathname.split('/').at(-1));
+    if (!asset) asset = assets.runtime.get(url.href);
     if (!asset) {
       evidence.blocked.push({ origin: url.origin, path: url.pathname });
       return route.abort('blockedbyclient');
