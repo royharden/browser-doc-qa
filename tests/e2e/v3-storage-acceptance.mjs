@@ -12,7 +12,7 @@ assert.equal(process.env.S11_RV_EXPECT_COMMIT, revision);
 const output = resolve(process.env.S11_RV_RECEIPT_ROOT ?? '.agent-work/rv-receipts', `V3-storage-${Date.now()}`);
 await mkdir(output, { recursive: true });
 const bundled = await build({ entryPoints: ['tests/e2e/v3-storage-entry.ts'], bundle: true, format: 'esm', platform: 'browser', write: false });
-const adapterBytes = bundled.outputFiles[0].contents;
+const adapterBytes = Buffer.from(bundled.outputFiles[0].contents);
 const rows = [];
 const browser = await chromium.launch({ executablePath: process.env.S11_RV_CHROME ?? 'C:/Program Files/Google/Chrome/Application/chrome.exe', headless: true, timeout: 30000 });
 async function check(name, run) {
@@ -28,14 +28,22 @@ async function check(name, run) {
   });
   const page = await context.newPage();
   page.setDefaultTimeout(20000);
+  let deadline;
   try {
-    await page.goto(origin, { waitUntil: 'networkidle' });
-    await page.evaluate(async () => { window.__rvStorage = await import('/__rv/storage.mjs'); });
-    const evidence = await run(page, context);
+    console.log('START', name);
+    const execution = (async () => {
+      await page.goto(origin, { waitUntil: 'networkidle' });
+      await page.evaluate(async () => { window.__rvStorage = await import('/__rv/storage.mjs'); });
+      return run(page, context);
+    })();
+    const evidence = await Promise.race([execution, new Promise((_, reject) => {
+      deadline = setTimeout(() => reject(new Error('Storage scenario exceeded 45 seconds')), 45000);
+    })]);
     assert.deepEqual(external, []);
     rows.push({ name, status: 'PASS', evidence });
   } catch (error) { rows.push({ name, status: 'FAIL', error: error.stack ?? String(error) }); }
   finally {
+    clearTimeout(deadline);
     await writeFile(resolve(output, 'results.json'), JSON.stringify({ revision, browser: browser.version(), rows }, null, 2));
     await context.close();
   }
