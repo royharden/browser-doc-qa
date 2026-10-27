@@ -1,7 +1,7 @@
 # Local validation scope
 
 Normal mode resumed after the 2026-10-26 PC crash. Source-only Dirty Mode acceptance is historical. The
-independent reviewer passed dependency checkpoints V0/V1 and bounded V2 functional scope. Final candidate
+independent reviewer passed dependency checkpoints V0/V1, bounded V2 and the authorized V3 scope. Final candidate
 verdicts and integration receipts live in the outer STATUS/HANDOFF run records; this document grants no
 publication or whole-PLAN acceptance.
 
@@ -15,6 +15,9 @@ publication or whole-PLAN acceptance.
   frozen exactly and independently checked against the retained asset and original authored sentences.
 - Real q8/CLS/384 WASM model, consented load, three-arm paraphrase, calibration before evaluation, overflow recovery,
   valid report export excluding synthetic private source/questions. No embedding doubles are in the production path.
+- Independent V3 replay: real asset cancellation/local failure/explicit WASM retry; independent prefix/vector/token
+  observations and a separate cell-based report oracle; canonical headers on both document and actual worker;
+  real blocked-open/upgrade/versionchange/quota and isolated Chrome reload cases; four distinct negative PDF states.
 
 ## Observed authored-corpus result
 
@@ -52,8 +55,10 @@ Raw timings/reports/captures remain ignored agent receipts, not committed perfor
 
 ## Still required / restricted
 
-Independent V3 real-model/production acceptance and the bounded storage quota/upgrade/versionchange/private-context
-matrix must be tied to the final candidate. Delete-all, pending-job deletion, reload-confirmed deletion and model-cache
-clearing remain unexecuted under Roy's no-delete instruction unless explicitly permitted for synthetic test contexts.
+V3 source 1da1cbb and reviewer test tree 51377b8 have a bounded independent PASS. Model/storage runners deliberately
+returned nonzero for explicit BLOCKED deletion rows (model exit 1, storage exit 2); PDF boundaries and headers returned
+zero with all authorized cases passing. Do not relabel those mixed-scope runs as all-green full-PLAN completion.
+Delete-all, pending-job deletion, reload-confirmed deletion, model-cache clearing and removal of legacy v1 documents/meta
+remain unexecuted under Roy's no-delete instruction unless explicitly permitted for synthetic test contexts.
 No push, publish, deploy, credentials, accounts, paid services or real-user-profile actions were performed. Database,
 SQL migrations and Docker services are not applicable to this static app. Optional M7/M8 studies/generation remain out.

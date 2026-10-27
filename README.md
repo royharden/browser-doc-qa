@@ -23,9 +23,10 @@ sharp to 0.35.5; real typecheck, baseline 75 tests, production build and product
 citation/negative/PDF import, exact extraction, persistence opt-in/reload, inert Markdown and stacked-layout
 checks with external requests blocked. A delayed persistence opt-in race was reproduced by the reviewer and
 fixed with latest-operation ownership and independently accepted in the bounded V2 checkpoint. An author
-production run now executes real local WASM embeddings, calibration and all three evaluation arms, with
-request/export sentinels and actual token/vector checks. Independent V3 acceptance and the permitted storage
-matrix remain required; destructive clear-data/cache tests are held by the current no-delete instruction.
+production run executes real local WASM embeddings, calibration and all three evaluation arms, with
+request/export sentinels and actual token/vector checks. Independent V3 passed the authorized model, report,
+header, storage-resilience and negative-PDF scope. Destructive clear-data/cache and legacy-removal tests
+remain held by the current no-delete instruction; the full PLAN is not declared complete.
 See `docs/VALIDATION.md` and outer STATUS.md for scope, candidate pins and remaining checks.
 
 ## What is built (source)

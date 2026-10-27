@@ -15,7 +15,8 @@ export function ModelPanel({ state, controller }: PanelProps) {
       {info && (
         <>
           <p>
-            <code>{info.modelId}</code> ({info.dtype}, revision <code>{info.revision}</code>). Download: {info.estimate}.
+            <code>{info.modelId}</code> ({info.dtype}, revision <code>{info.revision}</code>). Model files: {info.estimate}.
+            {' '}The app and inference runtime add separate downloads; transfer size depends on caching and compression.
             Files come from: {info.origins.join(', ')}. Your document text is not sent anywhere; only model files are downloaded.
           </p>
           <label className="checkbox">
