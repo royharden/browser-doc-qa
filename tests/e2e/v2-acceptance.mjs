@@ -12,7 +12,7 @@ const origin = process.env.S11_RV_ORIGIN;
 assert.match(origin ?? '', /^http:\/\/127\.0\.0\.1:227\d\d$/);
 const revision = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
 assert.equal(process.env.S11_RV_EXPECT_COMMIT, revision, 'Pin the exact checked-out candidate before running.');
-const output = resolve('.agent-work/rv-receipts', `V2-${Date.now()}`);
+const output = resolve(process.env.S11_RV_RECEIPT_ROOT ?? '.agent-work/rv-receipts', `V2-${Date.now()}`);
 await mkdir(output, { recursive: true });
 const rows = [];
 let browser;
@@ -40,7 +40,12 @@ async function fresh(run) {
     await run(page, context);
     assert.deepEqual(errors, [], 'No uncaught page errors');
     assert.deepEqual(blocked, [], 'No attempted external downloads/calls in keyword-only journeys');
-    return { requests, errors, blocked };
+    const counts = {};
+    for (const request of requests) {
+      const key = `${request.origin} ${request.type}`;
+      counts[key] = (counts[key] ?? 0) + 1;
+    }
+    return { requestCounts: counts, errors, blocked };
   } finally {
     external.push(...blocked);
     await context.close();
@@ -126,7 +131,8 @@ try {
   });
 
   await check('explicit persistence opt-in survives reload', async (page) => {
-    await page.getByLabel('Save imported documents and vectors in this browser', { exact: true }).check();
+    // The controlled checkbox commits after asynchronous IndexedDB open; wait for that state.
+    await page.getByLabel('Save imported documents and vectors in this browser', { exact: true }).click();
     await page.getByText(/Currently using: browser storage \(IndexedDB\)/).waitFor();
     await importText(page, 'rv-persist.txt', 'Synthetic persisted source: opening time is 08:30.');
     await page.locator('.library').getByRole('button', { name: 'rv-persist.txt', exact: true }).waitFor();
