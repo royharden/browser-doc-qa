@@ -25,3 +25,16 @@ Sources:
 - [BAAI upstream model/terms](https://huggingface.co/BAAI/bge-small-en-v1.5)
 
 These metadata checks do not establish real browser backend, vectors, inference quality, calibration or privacy. Those require execution receipts and independent review.
+
+## Local execution asset cache
+
+FULL validation acquired only these immutable public dependency files (no inference API, account/key or document payload). They remain outside Git under ignored `.agent-work/models/<revision>/`. Offline browser validation verifies bytes and SHA-256 and fulfills asset requests from that cache; no remote request is continued.
+
+| File | SHA-256 |
+|---|---|
+| config.json | fa73f90bf92c8cace1fbcb709626306f2bdbc9ea3e5b5f94b440df9b6aa56350 |
+| tokenizer.json | d241a60d5e8f04cc1b2b3e9ef7a4921b27bf526d9f6050ab90f9267a1f9e5c66 |
+| tokenizer_config.json | 9261e7d79b44c8195c1cada2b453e55b00aeb81e907a6664974b4d7776172ab3 |
+| onnx/model_quantized.onnx | 6c9c6101a956d62dfb5e7190c538226c0c5bb9cb27b651234b6df063ee7dbfe4 |
+
+The matching runtime `.mjs`/`.wasm` files come from installed Transformers.js 3.8.1. The offline validation cache is a test transport for unchanged real model bytes, not an embedding test double or a production offline-shell promise. Use a production preview, not first-use Vite development optimization: optimizer reloads can reset consent/model state during the first dynamic worker import.

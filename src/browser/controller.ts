@@ -439,8 +439,13 @@ export class AppController {
   }
 
   private onProgress(job: Job, progress: EmbedProgress): void {
-    const label = progress.phase === 'download' ? 'Downloading model files' : progress.phase === 'init' ? 'Starting the model' : 'Embedding';
-    this.jobs.commit(job, () => this.set({ progress: { label, done: progress.done, total: progress.total } }));
+    const bytes = progress.phase === 'download'
+      && typeof progress.loadedBytes === 'number' && Number.isFinite(progress.loadedBytes) && progress.loadedBytes >= 0
+      && typeof progress.totalBytes === 'number' && Number.isFinite(progress.totalBytes) && progress.totalBytes >= 0;
+    const label = bytes ? 'Downloading model bytes' : progress.phase === 'download' ? 'Downloading model files' : progress.phase === 'init' ? 'Starting the model' : 'Embedding';
+    this.jobs.commit(job, () => this.set({ progress: {
+      label, done: bytes ? progress.loadedBytes! : progress.done, total: bytes ? progress.totalBytes! : progress.total,
+    } }));
   }
 
   // ---- Measurements (bundled evaluation fixture only) ----

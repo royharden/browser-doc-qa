@@ -1,6 +1,6 @@
-# PROPOSAL ONLY - not verified on any host (PLAN.md section 7). Inspect the actual served response
-# headers after deployment; a host may ignore this file. Allowed origins can still receive leaked text,
-# so a later production-build sentinel check across main/worker requests is still required.
+# Static-host proposal; Vite preview mirrors these values for local production validation only.
+# Inspect the actual served response headers after deployment; a host may ignore this file.
+# Allowed origins can still receive leaked text, so production main/worker sentinels remain required.
 # script-src/connect-src include cdn.jsdelivr.net because Transformers.js loads ONNX Runtime WebAssembly
 # files from there by default; huggingface.co and *.hf.co serve the model files.
 /*

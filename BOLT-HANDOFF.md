@@ -12,7 +12,7 @@ Status line: **FULL local validation in progress; independent acceptance pending
 - Hosting: static hosting of the Vite `dist/` output; host not selected.
 - Publication: prepare only. Not authorized.
 - Bolt action: **inspect and prepare only**.
-- Status: source reused from Dirty Mode. V0 install/typecheck/75 tests/build pass at 8690fb1; current dependency follow-up typecheck/audit pass. Browser startup blocked; no whole-product acceptance. Infrastructure Not required.
+- Status: source reused from Dirty Mode. V0/V1 and bounded V2 independently accepted; real PDF/browser and author local-WASM/calibration/evaluation runs executed. Final V3/storage acceptance and restricted deletion checks remain; no whole-PLAN acceptance. Infrastructure Not required.
 - Owner prerequisites: GitHub access to the imported repository (none exists yet). No API keys or registrations.
 
 ## Build and connection
@@ -50,7 +50,7 @@ None. Do not add any. Never expose credentials through `VITE_` variables.
   - ONNX Runtime WebAssembly files loaded by Transformers.js from `https://cdn.jsdelivr.net`.
   - PDF.js worker is bundled by Vite (no CDN worker).
 - Real integrations: PDF.js (local bytes), Transformers.js (real model in a worker). Explicit demos/stubs: none in the product; test doubles exist only under `tests/`.
-- Headers: `public/_headers` is a **proposed** CSP/security header set; whether the host serves it is unverified.
+- Headers: Vite production preview mirrors canonical `public/_headers` for local verification. Remote hosting is unconfigured and its behavior remains unverified.
 - Original PDF retained: `public/demo/harbor-line.pdf`; actual four-page extraction frozen in `tests/fixtures/pdf/harbor-line.expected.json` after rendered-page inspection. Normal builds do not reprint it.
 
 ## Acceptance checks and receipts
@@ -59,10 +59,10 @@ None. Do not add any. Never expose credentials through `VITE_` variables.
 |---|---|---|
 | Import/install/build | pinned `npm ci`; `npm run build` passes | V0 8690fb1 pass; independent review pending |
 | Typecheck/tests | `npm run typecheck`, `npm test` pass with real dependency types | V0 8690fb1 real typecheck and 75 tests pass; current follow-up checks recorded outside |
-| Keyword journey | tutorial loads with no model fetch; weekday question cites exact span; negative abstains | pending |
-| Dense/hybrid | consented model load (WASM; optional WebGPU) with progress/cancel; all three arms run | pending |
-| Measurements | calibration on 12 calibration questions, then 24-question run; JSON export validates | pending |
-| PDF import | printed Harbor Line PDF extracts with correct pages/citations | author browser run passed; independent V2 acceptance pending |
+| Keyword journey | tutorial loads with no model fetch; weekday question cites exact span; negative abstains | independent bounded V2 PASS |
+| Dense/hybrid | consented model load (WASM; optional WebGPU) with progress/cancel; all three arms run | real author WASM run passed; independent V3 pending; WebGPU unavailable baseline |
+| Measurements | calibration on 12 calibration questions, then 24-question run; JSON export validates | real author run: 216/216 measured rows OK; independent V3 pending |
+| PDF import | printed Harbor Line PDF extracts with correct pages/citations | independent V2 PASS; retained original asset/frozen canonical extraction |
 | Storage/lifecycle | opt-in persistence, reload, delete all, cancel/replace during jobs | pending |
 | Privacy/headers | served headers inspected; production sentinel check of main/worker requests | pending |
 | Publish | Not requested | Not requested |
