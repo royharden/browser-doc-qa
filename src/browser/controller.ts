@@ -91,6 +91,8 @@ export class AppController {
   private readonly jobs = new JobController();
   private readonly services: Services;
   private library: LibraryStore | null = null;
+  private libraryEpoch = 0;
+  private disposed = false;
   private dense: DenseContext | null = null;
 
   constructor(services: Services) {
@@ -161,37 +163,57 @@ export class AppController {
   }
 
   async init(): Promise<void> {
-    await this.openLibrary(this.state.persistence.enabled);
+    if (!(await this.openLibrary(this.state.persistence.enabled))) return;
     await this.loadStoredReport();
+    if (this.disposed) return;
     const probe = await this.services.environment.probeWebGpu(1500);
-    this.set({ model: { ...this.state.model, webgpuAvailable: probe } });
+    if (!this.disposed) this.set({ model: { ...this.state.model, webgpuAvailable: probe } });
   }
 
-  private async openLibrary(persistent: boolean): Promise<void> {
+  private async openLibrary(persistent: boolean): Promise<boolean> {
+    const epoch = ++this.libraryEpoch;
     this.library?.close();
+    this.library = null;
+    // Reflect intent immediately, including opt-out while an earlier IndexedDB open is pending.
+    this.set({ persistence: { enabled: persistent, kind: 'memory', warning: null }, library: [] });
     const library = await this.services.openLibrary(persistent);
-    this.library = library;
+    if (this.disposed || epoch !== this.libraryEpoch) {
+      library.close();
+      return false;
+    }
     const documents = await library.listDocuments().catch(() => []);
+    if (this.disposed || epoch !== this.libraryEpoch) {
+      library.close();
+      return false;
+    }
+    this.library = library;
     this.set({
       persistence: { enabled: persistent, kind: library.kind, warning: library.warning },
       library: documents,
     });
+    return true;
   }
 
   /** Explicit opt-in. Turning it off does not delete stored data; "Delete all" does. */
   async setPersistence(enabled: boolean): Promise<void> {
+    if (this.disposed) return;
     this.services.preferences.setPersistence(enabled);
-    await this.openLibrary(enabled);
+    if (!(await this.openLibrary(enabled))) return;
     const corpus = this.state.corpus;
     if (enabled && corpus && corpus.document.sourceType !== 'fixture') await this.persistDocument(corpus.document);
   }
 
   private async persistDocument(document: DocumentRecord): Promise<number> {
-    if (!this.library || this.library.kind !== 'indexeddb' || document.sourceType === 'fixture') return 0;
+    const library = this.library;
+    const epoch = this.libraryEpoch;
+    if (!library || library.kind !== 'indexeddb' || document.sourceType === 'fixture') return 0;
     const started = this.services.clock.now();
-    await this.library.putDocument(document);
+    await library.putDocument(document);
     const ms = this.services.clock.now() - started;
-    this.set({ library: await this.library.listDocuments() });
+    if (!this.disposed && epoch === this.libraryEpoch) {
+      const documents = await library.listDocuments();
+      if (!this.disposed && epoch === this.libraryEpoch) this.set({ library: documents });
+    }
     return ms;
   }
 
@@ -577,9 +599,12 @@ export class AppController {
   }
 
   dispose(): void {
+    this.disposed = true;
+    this.libraryEpoch += 1;
     this.jobs.invalidateAll();
     this.services.dense?.dispose();
     this.library?.close();
+    this.library = null;
     this.listeners.clear();
   }
 }

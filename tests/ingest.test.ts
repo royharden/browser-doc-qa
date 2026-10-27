@@ -66,12 +66,19 @@ test('text import rejects invalid UTF-8 and builds a hashed document', () => {
   assert.ok(document.contentHash.startsWith('fnv64:'));
 });
 
-test('the printable PDF fixture expectations match the tutorial source text', () => {
+test('the inspected PDF extraction preserves each tutorial sentence and page mapping', () => {
   const pages = harborPages();
   assert.equal(expected.pages.length, pages.length);
   expected.pages.forEach((page, index) => {
     const source = pages[index]?.canonicalText ?? '';
-    for (const sentence of page.sentences) assert.ok(source.includes(sentence), sentence);
+    assert.equal(page.pageNumber, index + 1);
+    assert.ok(page.canonicalText.startsWith(page.heading));
+    for (const sentence of page.sentences) {
+      assert.ok(source.includes(sentence), sentence);
+      assert.ok(page.canonicalText.replace(/\s+/g, ' ').includes(sentence), sentence);
+    }
   });
-  assert.equal(expected.status, 'pending-real-extraction');
+  assert.equal(expected.status, 'validated-real-extraction');
+  assert.ok(expected.preparation.browser);
+  assert.ok(expected.extraction.contentHash.startsWith('fnv64:'));
 });

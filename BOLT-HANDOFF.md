@@ -51,7 +51,7 @@ None. Do not add any. Never expose credentials through `VITE_` variables.
   - PDF.js worker is bundled by Vite (no CDN worker).
 - Real integrations: PDF.js (local bytes), Transformers.js (real model in a worker). Explicit demos/stubs: none in the product; test doubles exist only under `tests/`.
 - Headers: `public/_headers` is a **proposed** CSP/security header set; whether the host serves it is unverified.
-- Assets still missing: `public/demo/harbor-line.pdf` (print `tests/fixtures/pdf/harbor-line.print.html`; see README Activation step 5).
+- Original PDF retained: `public/demo/harbor-line.pdf`; actual four-page extraction frozen in `tests/fixtures/pdf/harbor-line.expected.json` after rendered-page inspection. Normal builds do not reprint it.
 
 ## Acceptance checks and receipts
 
@@ -62,7 +62,7 @@ None. Do not add any. Never expose credentials through `VITE_` variables.
 | Keyword journey | tutorial loads with no model fetch; weekday question cites exact span; negative abstains | pending |
 | Dense/hybrid | consented model load (WASM; optional WebGPU) with progress/cancel; all three arms run | pending |
 | Measurements | calibration on 12 calibration questions, then 24-question run; JSON export validates | pending |
-| PDF import | printed Harbor Line PDF extracts with correct pages/citations | pending (asset not produced) |
+| PDF import | printed Harbor Line PDF extracts with correct pages/citations | author browser run passed; independent V2 acceptance pending |
 | Storage/lifecycle | opt-in persistence, reload, delete all, cancel/replace during jobs | pending |
 | Privacy/headers | served headers inspected; production sentinel check of main/worker requests | pending |
 | Publish | Not requested | Not requested |
