@@ -22,8 +22,11 @@ sharp to 0.35.5; real typecheck, baseline 75 tests, production build and product
 (zero audit findings at the activation check). After PC recovery, Chrome 155 ran actual tutorial/keyboard
 citation/negative/PDF import, exact extraction, persistence opt-in/reload, inert Markdown and stacked-layout
 checks with external requests blocked. A delayed persistence opt-in race was reproduced by the reviewer and
-fixed with latest-operation ownership; independent V2 acceptance is pending. Real model inference,
-calibration/quality and production network sentinels remain unverified. See outer STATUS.md for candidate pins.
+fixed with latest-operation ownership and independently accepted in the bounded V2 checkpoint. An author
+production run now executes real local WASM embeddings, calibration and all three evaluation arms, with
+request/export sentinels and actual token/vector checks. Independent V3 acceptance and the permitted storage
+matrix remain required; destructive clear-data/cache tests are held by the current no-delete instruction.
+See `docs/VALIDATION.md` and outer STATUS.md for scope, candidate pins and remaining checks.
 
 ## What is built (source)
 
@@ -121,3 +124,10 @@ origin, then `npm run test:browser`. Optional `S11_CHROME` selects an installed 
 uses a fresh context, blocks external requests, imports only synthetic/bundled fixtures, checks persistence
 reload and renders captures under ignored `.agent-work/receipts`. It does not execute clear-data deletion
 actions or substitute mocked vectors for real-model acceptance. Independent RV suites remain the acceptance gate.
+
+For the real model regression, build with the non-secret `SOURCE_REVISION` set to the tested Git commit,
+start a claimed loopback production preview, set `S11_TEST_ORIGIN`, then run `npm run test:model-browser`.
+It requires the four SHA-verified model files and manifest in `.agent-work/models/<revision>/` (or an explicit
+`S11_MODEL_CACHE` directory); see `docs/MODEL-ARTIFACT.md`. Model/runtime requests are fulfilled from local
+dependency files and all other external requests are blocked. It does not invoke a hosted inference service.
+The production preview reads security headers from `public/_headers`; remote hosting still must apply them.

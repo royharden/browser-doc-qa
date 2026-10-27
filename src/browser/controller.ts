@@ -218,7 +218,11 @@ export class AppController {
   }
 
   loadTutorial(): Promise<void> {
-    return this.loadDocument(() => Promise.resolve({ document: harborDocument(), setup: [{ name: 'fixture-prepare', ms: 0, note: 'Bundled text fixture; not a PDF extraction.' }] }));
+    return this.loadDocument(() => {
+      const started = this.services.clock.now();
+      const document = harborDocument();
+      return Promise.resolve({ document, setup: [{ name: 'fixture-prepare', ms: this.services.clock.now() - started, note: 'Bundled text fixture; not a PDF extraction.' }] });
+    });
   }
 
   importFile(file: FileLike): Promise<void> {
@@ -240,9 +244,10 @@ export class AppController {
     const library = this.library;
     if (!library) return;
     await this.loadDocument(async () => {
+      const started = this.services.clock.now();
       const document = await library.getDocument(id);
       if (!document) throw new ActionableError('not-found', 'That saved document is missing or failed validation, so it was discarded.');
-      return { document, setup: [{ name: 'read', ms: 0, note: 'Loaded from browser storage' }] };
+      return { document, setup: [{ name: 'read', ms: this.services.clock.now() - started, note: 'Loaded from browser storage' }] };
     }, false);
   }
 
@@ -439,18 +444,26 @@ export class AppController {
   }
 
   private onProgress(job: Job, progress: EmbedProgress): void {
-    const label = progress.phase === 'download' ? 'Downloading model files' : progress.phase === 'init' ? 'Starting the model' : 'Embedding';
-    this.jobs.commit(job, () => this.set({ progress: { label, done: progress.done, total: progress.total } }));
+    const bytes = progress.phase === 'download'
+      && typeof progress.loadedBytes === 'number' && Number.isFinite(progress.loadedBytes) && progress.loadedBytes >= 0
+      && typeof progress.totalBytes === 'number' && Number.isFinite(progress.totalBytes) && progress.totalBytes >= 0;
+    const label = bytes ? 'Downloading model bytes' : progress.phase === 'download' ? 'Downloading model files' : progress.phase === 'init' ? 'Starting the model' : 'Embedding';
+    this.jobs.commit(job, () => this.set({ progress: {
+      label, done: bytes ? progress.loadedBytes! : progress.done, total: bytes ? progress.totalBytes! : progress.total,
+    } }));
   }
 
   // ---- Measurements (bundled evaluation fixture only) ----
 
   loadEvaluationCorpus(): Promise<void> {
-    const fixture = evaluationFixture();
-    return this.loadDocument(() => Promise.resolve({
-      document: fixture.document,
-      setup: [{ name: 'fixture-prepare', ms: 0, note: 'Bundled evaluation text fixture; not a PDF extraction.' }],
-    }), false);
+    return this.loadDocument(() => {
+      const started = this.services.clock.now();
+      const fixture = evaluationFixture();
+      return Promise.resolve({
+        document: fixture.document,
+        setup: [{ name: 'fixture-prepare', ms: this.services.clock.now() - started, note: 'Bundled evaluation text fixture; not a PDF extraction.' }],
+      });
+    }, false);
   }
 
   private measurementReady(): { corpus: Corpus; fixture: ReturnType<typeof evaluationFixture> } | null {

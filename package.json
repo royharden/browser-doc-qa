@@ -13,7 +13,8 @@
     "preview": "vite preview",
     "test": "node --experimental-strip-types --test --test-concurrency=1 tests/*.test.ts tests/acceptance/*.test.ts",
     "test:browser": "node scripts/validate-browser.mjs",
-    "prepare:pdf": "node scripts/validate-browser.mjs --prepare-pdf"
+    "prepare:pdf": "node scripts/validate-browser.mjs --prepare-pdf",
+    "test:model-browser": "node scripts/validate-model-browser.mjs"
   },
   "dependencies": {
     "@huggingface/transformers": "3.8.1",
