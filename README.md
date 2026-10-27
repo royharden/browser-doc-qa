@@ -13,7 +13,7 @@ use and zero network egress are **not** claimed.
 ## Status: FULL validation in progress
 
 Dirty Mode closed by Roy on 2026-10-26. The inherited source is being validated in local worktrees;
-independent reviewer acceptance is pending. At baseline activation commit `8690fb1`, pinned installation,
+bounded independent V0–V3 acceptance is recorded below; full PLAN acceptance remains open. At baseline activation commit `8690fb1`, pinned installation,
 real dependency typechecking, 73 existing tests, 2 independent oracle tests and the Vite production build
 all passed on Node 24.18.0/npm 11.11.0. The app also starts on its claimed loopback test port.
 
@@ -42,7 +42,7 @@ See `docs/VALIDATION.md` and outer STATUS.md for scope, candidate pins and remai
 | Measurements | `src/lib/fixture.ts`, `calibrate.ts`, `protocol.ts`, `metrics.ts`, `reportValidate.ts`; data in `src/data/evaluation/*.json` |
 | Storage / lifecycle | `src/adapters/libraryStore.ts` (memory default, IndexedDB only on opt-in), `src/lib/lifecycle.ts` |
 | UI | `src/main.tsx`, `src/browser/{controller,services,wire}.ts`, `src/ui/*.tsx`, `src/styles.css` |
-| Tests (unrun) | `tests/*.test.ts` (Node built-in runner), `tests/fixtures/pdf/*` |
+| Tests (83 passed at V3) | `tests/*.test.ts` and `tests/acceptance/*.test.ts` (Node runner); browser checks under `tests/e2e/` and `evals/`; `tests/fixtures/pdf/*` |
 
 Fixtures:
 
@@ -73,24 +73,25 @@ npm run dev          # claim a host port first (agent-ports skill) before listen
 The app works with keyword search immediately. Embedding and hybrid stay "unavailable" until you tick the
 consent box and load the model (WASM by default; "Try WebGPU" only when an adapter is found within 1.5 s).
 
-## Activation and validation still required
+## Validation replay and remaining checks
 
 1. Retain the lockfile and exact versions. Reproduce with `npm ci`; current direct versions are in package.json.
-2. Run `npm run typecheck`, `npm test`, `npm run build` on the candidate; independent review and combined-tree
-   checks are still required. `npm test` includes the nested independent oracles and serializes test files.
+2. Run `npm run typecheck`, `npm test`, `npm run build` on each new candidate. Independent V3 and the combined
+   accepted tree passed; `npm test` includes the nested independent oracles and serializes test files.
 3. Model metadata is pinned at `ea104dacec62c0de699686887e3f920caeb4f3e3`; see `docs/MODEL-ARTIFACT.md`.
-   Confirm actual browser token counts, output vectors and backend through real inference; metadata is not execution.
-4. In a browser: tutorial journey (weekday question, citation highlight, negative question), model load
-   with progress/cancel, WASM and optional WebGPU, all three arms on the paraphrase question.
+   Actual token counts, normalized vectors, query-only prefix and WASM backend passed independent real inference.
+4. Tutorial/citations/negative, model progress/cancel/retry and all three arms passed browser checks.
+   Repeat affected journeys after changes; optional WebGPU was unavailable and remains unexecuted.
 5. The prepared original PDF is retained; normal builds and browser checks do not regenerate it. If changing
    the printable source, explicitly run `npm run prepare:pdf` against a claimed local dev port, inspect all
    four rendered pages and re-freeze canonical extraction/page mapping in `harbor-line.expected.json`.
-6. Measurements: load the evaluation corpus, load the model, **Calibrate gates** (calibration split only),
-   then **Run measurements** on the untouched evaluation split; export the JSON report.
-7. Lifecycle/storage: cancel/replace/delete during pending jobs, IndexedDB reload/upgrade/quota/private mode,
-   "Delete all" and "Clear model cache" actually removing data.
-8. Privacy/hosting: inspect served headers (`public/_headers` is only a proposal) and run a production-build
-   sentinel check of main-thread and worker requests.
+6. Independent measurements passed: 12-question calibration before untouched 24-question evaluation;
+   288 exported / 216 measured rows, three arms 72/72 OK, independently recomputed report oracle.
+7. Non-destructive cancel/replace, IndexedDB reload/blocked-open/upgrade/versionchange/quota passed in isolated
+   Chrome contexts. Other browsers/private modes remain unverified. Pending-job deletion, reload-confirmed
+   delete-all, model-cache clearing and legacy-store removal await explicit permission for synthetic contexts.
+8. Local production document/worker canonical headers and request/export sentinels passed. Remote hosting
+   is unconfigured; broader transport behavior and first-visit offline remain unverified.
 
 ## Data and privacy controls
 

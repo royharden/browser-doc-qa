@@ -20,7 +20,7 @@ Status line: **FULL local validation: all currently authorized scope independent
 | Item | Exact command or configuration name |
 |---|---|
 | Runtime / package manager | Node 24.18.0 validated; minimum 22.13.0. npm 11.11.0; retained package-lock.json and exact direct versions. |
-| Frozen install / dev | `npm ci` once the lockfile exists; `npm run dev` |
+| Frozen install / dev | `npm ci` using retained lockfile; `npm run dev` after claiming a loopback port |
 | Build / output | `npm run build` (typecheck then `vite build`); output `dist/` |
 | Type/lint/tests | `npm run typecheck`, `npm test`; V3 independent run passed real types and 83 Node tests. Tests include reviewer oracles; no lint script exists. Candidate-specific receipts/verdicts in outer STATUS.md. |
 | Client file / public env names | Not required. No env variables (`.env.example` explains). Optional non-secret build-time `SOURCE_REVISION`. |
@@ -74,11 +74,11 @@ Real WASM/backend/quality and local production document/worker headers were inde
 
 | Component | Assumption / skipped check | Later step |
 |---|---|---|
-| Dependencies | exact versions and lock retained; PDF.js 6.2.108 / Transformers.js 3.8.1 | `npm ci`, candidate type/test/build and actual PDF/model run |
-| Model registry | exact artifact/tokenizer revision and file sizes checked; 512-token/384-d config verified | actual token bounds/CLS vectors/backend inference pending |
+| Dependencies | exact versions/lock retained; independent offline install, types, 83 tests and build passed | repeat affected checks on new candidates; preserve pins |
+| Model registry | exact artifact/tokenizer bytes, real token bounds/normalized CLS vectors and WASM backend independently verified | repeat affected inference checks if model recipe/runtime changes |
 | Embedding worker | real CLS/q8/384 normalization, query-only prefix and token refusal verified | optional WebGPU remains unexecuted/unavailable baseline |
 | PDF layout | actual original PDF canonical extraction, citations and four error states verified | larger/noisy-layout PDF study is optional post-MVP |
-| Tests | V0 73 existing + 2 independent oracle tests really passed | `npm test` on each accepted candidate |
+| Tests | V3 independent and combined accepted tree passed 83 tests | `npm test` on each new candidate |
 | IndexedDB | real blocked/non-destructive upgrade/versionchange/quota/isolated-context behavior verified | destructive old-store removal and clear-data/cache cases remain prohibited/unexecuted |
 | Calibration/quality | calibration chose .55/.75 before fixed evaluation; all three arms complete | descriptive small-corpus results/positive refusals in docs/VALIDATION.md; no general-quality claim |
 | Headers/privacy | local preview mirrors and serves canonical policy; actual request/export sentinels verified | remote host application, broader transports and first-visit offline remain unverified |

@@ -17,7 +17,7 @@ export function ModelPanel({ state, controller }: PanelProps) {
           <p>
             <code>{info.modelId}</code> ({info.dtype}, revision <code>{info.revision}</code>). Model files: {info.estimate}.
             {' '}The app and inference runtime add separate downloads; transfer size depends on caching and compression.
-            Files come from: {info.origins.join(', ')}. Your document text is not sent anywhere; only model files are downloaded.
+            Files come from: {info.origins.join(', ')}. Documents are processed in this browser; downloads fetch public model and runtime assets.
           </p>
           <label className="checkbox">
             <input type="checkbox" checked={consented} onChange={(event) => setConsented(event.target.checked)} disabled={model.status === 'ready'} />
