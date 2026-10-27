@@ -21,7 +21,7 @@ const origin = process.env.S11_RV_ORIGIN;
 assert.match(origin ?? '', /^http:\/\/127\.0\.0\.1:227\d\d$/);
 const tree = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
 assert.equal(process.env.S11_RV_EXPECT_COMMIT, tree);
-const productCommit = '540c6d01a77e1b858b7317bcc4093db1360a8ea9';
+const productCommit = '109ea2b5964f76376d8316d78502e4a2041a6bac';
 assert.equal(process.env.S11_RV_PRODUCT_COMMIT, productCommit);
 const assets = await localAssets(`C:/Worktrees/Bolt.New/browser-doc-qa/FULL-INT/.agent-work/models/${modelRevision}`);
 const output = resolve(process.env.S11_RV_RECEIPT_ROOT ?? '.agent-work/rv-receipts', `V4-${Date.now()}`);
