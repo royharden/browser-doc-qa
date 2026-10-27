@@ -87,7 +87,7 @@ export function instrumentWorkers() {
   // Observe real worker messages. No request text, inference result or worker source is replaced.
   const NativeWorker = window.Worker;
   window.__rvWorkers = [];
-  window.__rvWorkerStats = { queries: [], results: [], loads: [] };
+  window.__rvWorkerStats = { queries: [], results: [], loads: [], terminations: 0 };
   window.Worker = class extends NativeWorker {
     constructor(...args) {
       super(...args);
@@ -107,6 +107,10 @@ export function instrumentWorkers() {
         window.__rvWorkerStats.queries.push(...message.payload.texts);
       }
       return super.postMessage(message, ...rest);
+    }
+    terminate() {
+      window.__rvWorkerStats.terminations += 1;
+      return super.terminate();
     }
   };
 }
