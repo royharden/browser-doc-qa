@@ -62,17 +62,23 @@ test('RV: a late persistence opt-in cannot override a newer opt-out', async () =
   // All stores are in-memory test doubles; no IndexedDB or deletion action is performed.
   const opening = deferred<LibraryStore>();
   let preference = false;
+  let writes = 0;
+  let closed = 0;
   const controller = new AppController(services({
     openLibrary: async (persistent) => persistent ? opening.promise : memoryLibrary(),
     preferences: { getPersistence: () => preference, setPersistence: (value) => { preference = value; }, clear: () => {} },
   }));
   await controller.init();
+  await controller.importFile({ name: 'memory-only.txt', type: 'text/plain', size: 10,
+    arrayBuffer: async () => new TextEncoder().encode('Unpersisted synthetic source.').buffer });
   const enable = controller.setPersistence(true);
   await controller.setPersistence(false);
-  opening.resolve({ ...memoryLibrary(), kind: 'indexeddb' });
+  opening.resolve({ ...memoryLibrary(), kind: 'indexeddb', putDocument: async () => { writes += 1; }, close: () => { closed += 1; } });
   await enable;
   assert.equal(preference, false);
   assert.equal(controller.getState().persistence.enabled, false, 'the latest opt-out must win');
   assert.equal(controller.getState().persistence.kind, 'memory');
+  assert.equal(writes, 0, 'the obsolete opt-in must not persist the active memory document');
+  assert.equal(closed, 1, 'the late persistent handle must be released');
   controller.dispose();
 });

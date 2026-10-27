@@ -171,6 +171,30 @@ try {
   try { await access(pdf); }
   catch { rows.push({ name: 'actual PDF pages and spans', status: 'BLOCKED', reason: 'Pinned original PDF asset missing.' }); }
   if (!rows.some((r) => r.name === 'actual PDF pages and spans')) {
+    await check('cancel pending real PDF worker then load newer tutorial', async (page, context) => {
+      let release;
+      let observed = false;
+      const gate = new Promise((resolveGate) => { release = resolveGate; });
+      await context.route('**/*pdf.worker*', async (route) => {
+        observed = true;
+        await gate;
+        await route.continue().catch(() => {}); // cancellation may already have closed the request
+      });
+      try {
+        await page.locator('input[type=file]').setInputFiles(pdf);
+        const deadline = Date.now() + 15000;
+        while (!observed && Date.now() < deadline) await new Promise((done) => setTimeout(done, 50));
+        assert.equal(observed, true, 'The real PDF worker must reach the controlled pending boundary');
+        await page.getByRole('button', { name: 'Cancel', exact: true }).click();
+        await page.getByRole('button', { name: 'Load Harbor Line tutorial', exact: true }).click();
+        release();
+        await page.getByRole('heading', { name: 'Source: Harbor Line Ferry manual (tutorial)', exact: true }).waitFor();
+        await page.getByRole('button', { name: 'Weekday departure', exact: true }).click();
+        await page.locator('.excerpts blockquote').first().waitFor();
+        await citationCheck(page);
+        assert.equal(await page.getByRole('heading', { name: 'Source: harbor-line.pdf', exact: true }).count(), 0);
+      } finally { release(); }
+    });
     await check('actual PDF pages and spans', async (page) => {
       await page.locator('input[type=file]').setInputFiles(pdf);
       await page.getByRole('heading', { name: 'Source: harbor-line.pdf', exact: true }).waitFor();
