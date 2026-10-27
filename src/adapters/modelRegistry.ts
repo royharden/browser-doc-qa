@@ -38,7 +38,7 @@ export const BGE_SMALL_EN_V15: RegistryEntry = Object.freeze({
     'https://huggingface.co and its file CDN redirects on *.hf.co (model, config and tokenizer files)',
     'https://cdn.jsdelivr.net (ONNX Runtime WebAssembly files used by Transformers.js)',
   ]),
-  terms: 'BAAI/bge-small-en-v1.5 is published under the MIT licence; the Xenova ONNX conversion and Transformers.js (Apache-2.0) terms must be confirmed at pinning time.',
+  terms: 'BAAI/bge-small-en-v1.5 is published under MIT; the pinned Xenova conversion README links that upstream model without separate licence metadata. Transformers.js is Apache-2.0. See NOTICE and docs/MODEL-ARTIFACT.md.',
   pinned: true,
 });
 

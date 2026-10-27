@@ -18,10 +18,12 @@ real dependency typechecking, 73 existing tests, 2 independent oracle tests and 
 all passed on Node 24.18.0/npm 11.11.0. The app also starts on its claimed loopback test port.
 
 Follow-up dependencies use PDF.js 6.2.108 and an override of the unused browser-path Node image dependency
-sharp to 0.35.5; real typecheck, 75 tests, production build and production dependency audit pass (zero audit findings). Browser startup
-is currently timing out on this machine, so PDF import, model inference, storage journeys, production
-network sentinels and browser calibration/quality remain unverified. No model quality or browser timing
-numbers are claimed. See the outer STATUS.md and package receipts for candidate-specific results.
+sharp to 0.35.5; real typecheck, baseline 75 tests, production build and production dependency audit passed
+(zero audit findings at the activation check). After PC recovery, Chrome 155 ran actual tutorial/keyboard
+citation/negative/PDF import, exact extraction, persistence opt-in/reload, inert Markdown and stacked-layout
+checks with external requests blocked. A delayed persistence opt-in race was reproduced by the reviewer and
+fixed with latest-operation ownership; independent V2 acceptance is pending. Real model inference,
+calibration/quality and production network sentinels remain unverified. See outer STATUS.md for candidate pins.
 
 ## What is built (source)
 
@@ -47,8 +49,10 @@ Fixtures:
   questions (6 lexical, 8 paraphrase, 4 multi-evidence, 6 negatives). Generated with exact UTF-16 offsets by
   `scripts/fixture-authoring.py` (`--check` verifies the committed JSON). Do not edit labels after looking at
   results; bump the fixture version instead.
-- **Harbor Line PDF**: `tests/fixtures/pdf/harbor-line.print.html` is the printable source. The PDF itself
-  (`public/demo/harbor-line.pdf`) has **not** been produced; see "Activation" step 5.
+- **Harbor Line PDF**: `public/demo/harbor-line.pdf` is the original four-page tutorial, prepared from
+  `tests/fixtures/pdf/harbor-line.print.html` with Chrome 155. Its four rendered pages and actual PDF.js 6.2.108
+  extraction were inspected; exact canonical strings and preparation settings are frozen in
+  `tests/fixtures/pdf/harbor-line.expected.json`. It is separate from the text benchmark.
 
 ## Run it locally
 
@@ -74,9 +78,9 @@ consent box and load the model (WASM by default; "Try WebGPU" only when an adapt
    Confirm actual browser token counts, output vectors and backend through real inference; metadata is not execution.
 4. In a browser: tutorial journey (weekday question, citation highlight, negative question), model load
    with progress/cancel, WASM and optional WebGPU, all three arms on the paraphrase question.
-5. Print `tests/fixtures/pdf/harbor-line.print.html` to `public/demo/harbor-line.pdf` (Letter, default
-   margins, no headers/footers), record browser and page mapping in `harbor-line.expected.json`, import it,
-   and inspect extraction and citations.
+5. The prepared original PDF is retained; normal builds and browser checks do not regenerate it. If changing
+   the printable source, explicitly run `npm run prepare:pdf` against a claimed local dev port, inspect all
+   four rendered pages and re-freeze canonical extraction/page mapping in `harbor-line.expected.json`.
 6. Measurements: load the evaluation corpus, load the model, **Calibrate gates** (calibration split only),
    then **Run measurements** on the untouched evaluation split; export the JSON report.
 7. Lifecycle/storage: cancel/replace/delete during pending jobs, IndexedDB reload/upgrade/quota/private mode,
@@ -111,3 +115,9 @@ original-layout PDF highlights, answer generation (the optional WebLLM exact-quo
 real-PDF study are post-MVP and were not built).
 
 Database: none. See `BOLT-HANDOFF.md`.
+
+Local browser regression (Chrome installed on this PC): set `S11_TEST_ORIGIN` to the claimed loopback dev
+origin, then `npm run test:browser`. Optional `S11_CHROME` selects an installed browser executable. The script
+uses a fresh context, blocks external requests, imports only synthetic/bundled fixtures, checks persistence
+reload and renders captures under ignored `.agent-work/receipts`. It does not execute clear-data deletion
+actions or substitute mocked vectors for real-model acceptance. Independent RV suites remain the acceptance gate.

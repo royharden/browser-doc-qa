@@ -1,14 +1,15 @@
 {
   "fixture": "harbor-line.pdf",
-  "status": "pending-real-extraction",
+  "status": "validated-real-extraction",
   "preparation": {
     "source": "tests/fixtures/pdf/harbor-line.print.html",
     "output": "public/demo/harbor-line.pdf",
-    "browser": null,
+    "browser": "155.0.8059.85",
     "pageSize": "Letter",
-    "margins": "default",
+    "margins": "0.4in on all sides (plus printable section padding)",
     "headersFooters": "off",
-    "preparedAt": null
+    "preparedAt": "2026-10-26T22:01:00-04:00",
+    "method": "scripts/validate-browser.mjs --prepare-pdf, Chromium page.pdf, Letter, no headers/footers"
   },
   "pageMapping": [
     {
@@ -28,7 +29,7 @@
       "section": "Freight"
     }
   ],
-  "note": "Sentences must appear on the mapped PDF page after whitespace normalization (line wraps become spaces). Exact canonical text is recorded here only after a real pdf.js extraction is inspected.",
+  "note": "Actual PDF.js 6.2.108 browser extraction inspected 2026-10-26; canonicalText values are frozen exact UTF-16 strings, distinct from tutorial TXT layout. Every original sentence matches after whitespace normalization. Four rendered pages inspected separately.",
   "pages": [
     {
       "pageNumber": 1,
@@ -39,7 +40,8 @@
         "Saturday and Sunday last departures leave at 9:15 p.m.",
         "Boarding closes ten minutes before departure.",
         "The crossing takes thirty five minutes in clear weather."
-      ]
+      ],
+      "canonicalText": "Harbor Line Ferry: Schedule\n\nHarbor Line Ferry runs between Pier 4 and Gull Island. The last weekday\ndeparture from Pier 4 is 10:40 p.m. Saturday and Sunday last departures leave\nat 9:15 p.m. Boarding closes ten minutes before departure. The crossing takes\nthirty five minutes in clear weather."
     },
     {
       "pageNumber": 2,
@@ -50,7 +52,8 @@
         "Children under five ride free.",
         "A bicycle pays a 3 dollar rack fee and must sit on the stern rack.",
         "Tickets are sold at the Pier 4 window until boarding closes."
-      ]
+      ],
+      "canonicalText": "Harbor Line Ferry: Fares\n\nAdult fare is 14 dollars each way. The senior fare is 7 dollars with photo\nidentification. Children under five ride free. A bicycle pays a 3 dollar rack fee\nand must sit on the stern rack. Tickets are sold at the Pier 4 window until\nboarding closes."
     },
     {
       "pageNumber": 3,
@@ -60,7 +63,8 @@
         "In a medical emergency, call the duty officer on channel 16 and then the harbor clinic at 555-0148.",
         "Fog delays hold the boat at the dock until visibility exceeds one mile.",
         "Do not board during a posted fog hold."
-      ]
+      ],
+      "canonicalText": "Harbor Line Ferry: Safety\n\nLife jackets are stored in the port locker beside the wheelhouse. In a medical\nemergency, call the duty officer on channel 16 and then the harbor clinic at\n555-0148. Fog delays hold the boat at the dock until visibility exceeds one\nmile. Do not board during a posted fog hold."
     },
     {
       "pageNumber": 4,
@@ -70,7 +74,12 @@
         "Live animals travel only in approved crates on the freight well.",
         "Propane and loose fuel are refused.",
         "Freight closes twenty minutes before departure."
-      ]
+      ],
+      "canonicalText": "Harbor Line Ferry: Freight\n\nThe deck crane limit is 800 pounds. Live animals travel only in approved\ncrates on the freight well. Propane and loose fuel are refused. Freight closes\ntwenty minutes before departure."
     }
-  ]
+  ],
+  "extraction": {
+    "contentHash": "fnv64:fe24c3de5e47d34c",
+    "extractionVersion": "pdf-layout-v1"
+  }
 }

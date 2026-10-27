@@ -12,7 +12,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "preview": "vite preview",
     "test": "node --experimental-strip-types --test --test-concurrency=1 tests/*.test.ts tests/acceptance/*.test.ts",
-    "test:browser": "node scripts/validate-browser.mjs"
+    "test:browser": "node scripts/validate-browser.mjs",
+    "prepare:pdf": "node scripts/validate-browser.mjs --prepare-pdf"
   },
   "dependencies": {
     "@huggingface/transformers": "3.8.1",
