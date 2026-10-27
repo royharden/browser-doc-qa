@@ -7,7 +7,7 @@ publication or whole-PLAN acceptance.
 
 ## Executed journeys
 
-- Real dependency types, Node regression/oracle suites and production build. The V3 author suite has 81 tests,
+- Real dependency types, Node regression/oracle suites and production build. The V3 author suite has 83 tests,
   including independent evidence/BM25 oracles, persistence opt-out/cancel/replace races and partial-byte progress.
 - Chrome 155 fresh contexts: keyword tutorial/negative, exact keyboard citations, inert Markdown/filenames,
   desktop and stacked layout, >10 MiB rejection, explicit IndexedDB opt-in/reload, PDF cancel/replace and JSON export.
