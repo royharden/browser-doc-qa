@@ -28,7 +28,7 @@ export function App({ controller }: { controller: AppController }) {
         </p>
       </header>
       <StatusBar state={state} controller={controller} />
-      <main className="layout">
+      <main className="layout" key={state.dataResetSequence}>
         <section className="column column-controls" aria-label="Controls">
           <DocumentPanel state={state} controller={controller} />
           <ModelPanel state={state} controller={controller} />
@@ -38,7 +38,7 @@ export function App({ controller }: { controller: AppController }) {
           <Viewer state={state} controller={controller} />
         </section>
       </main>
-      <MeasurementsPanel state={state} controller={controller} />
+      <MeasurementsPanel key={state.dataResetSequence} state={state} controller={controller} />
     </div>
   );
 }
