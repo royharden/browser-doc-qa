@@ -8,3 +8,14 @@ dist/
 .env
 .env.*
 !.env.example
+
+# Local credentials and generated artifacts stay outside repository history.
+.creds/
+ArchiveManager-creds.txt
+*.pem
+*.key
+*.p12
+*.pfx
+*.zip
+coverage/
+.cache/
