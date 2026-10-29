@@ -25,6 +25,8 @@ export interface ProgressView {
 }
 
 export interface AppState {
+  /** Explicit data reset invalidates component-local drafts, consent and input references. */
+  dataResetSequence: number;
   phase: JobState;
   progress: ProgressView | null;
   error: { code: string; message: string } | null;
@@ -98,6 +100,7 @@ export class AppController {
   constructor(services: Services) {
     this.services = services;
     this.state = {
+      dataResetSequence: 0,
       phase: 'idle',
       progress: null,
       error: null,
@@ -587,7 +590,7 @@ export class AppController {
     this.dense = null;
     this.syncModelAfterAbort();
     this.set({ measurement: { status: 'idle', message: null, report: null, calibration: null } });
-    this.set({ corpus: null, runs: {}, query: null, focus: null, viewerPage: null, setup: [], phase: 'idle', progress: null, dense: { status: 'unavailable', reason: idleDenseReason(this.services), revision: null }, policy: DEFAULT_POLICY });
+    this.set({ dataResetSequence: this.state.dataResetSequence + 1, corpus: null, runs: {}, query: null, answerArm: 'keyword', focus: null, viewerPage: null, setup: [], phase: 'idle', progress: null, error: null, notice: null, dense: { status: 'unavailable', reason: idleDenseReason(this.services), revision: null }, policy: DEFAULT_POLICY });
     // Every clear step runs even if an earlier one fails; the first failure is reported afterwards.
     const failures: unknown[] = [];
     const attempt = async (step: () => Promise<void> | void): Promise<void> => {
